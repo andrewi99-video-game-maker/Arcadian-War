@@ -1,0 +1,3417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hyperswag Arena - 3D Multiplayer Action</title>
+<style>
+/* css/style.css - Hyperswag Arena Modern Game Styles */
+html, body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #03080e;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
+  height: 100%;
+  user-select: none;
+}
+
+canvas {
+  display: block;
+}
+
+#hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+#healthWrap {
+  position: absolute;
+  top: 22px;
+  left: 24px;
+  width: 240px;
+}
+
+#healthLabel {
+  font-size: 11px;
+  letter-spacing: 2px;
+  font-weight: 700;
+  margin-bottom: 5px;
+  color: #aae8ff;
+  display: flex;
+  justify-content: space-between;
+}
+
+#healthBarBg {
+  width: 100%;
+  height: 20px;
+  background: rgba(10, 20, 30, 0.7);
+  border: 2px solid rgba(140, 230, 255, 0.4);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 0 12px rgba(0, 180, 255, 0.2);
+}
+
+#healthBarFg {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #1ab8ff, #7fe5ff);
+  transition: width 0.15s ease-out, background 0.3s;
+}
+
+#waveText {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(100, 220, 255, 0.6);
+}
+
+#scoreText {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #d8f5ff;
+}
+
+#onlineStatus {
+  position: absolute;
+  top: 54px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #8ff0ff;
+  background: rgba(10, 25, 40, 0.75);
+  backdrop-filter: blur(8px);
+  padding: 5px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(140, 230, 255, 0.3);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+}
+
+/* Crosshair & Snowball Charge Meter */
+#crosshairWrap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+#crosshair {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.9);
+  transition: transform 0.1s;
+}
+
+#chargeRing {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  transform: rotate(-90deg);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+#chargeRing circle {
+  fill: none;
+  stroke-width: 4;
+}
+
+#chargeRingBg {
+  stroke: rgba(255, 255, 255, 0.15);
+}
+
+#chargeRingFg {
+  stroke: #7fe5ff;
+  stroke-dasharray: 125.6;
+  stroke-dashoffset: 125.6;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 6px #55d0ff);
+  transition: stroke-dashoffset 0.05s linear;
+}
+
+#crosshairWrap.charging #chargeRing {
+  opacity: 1;
+}
+
+#crosshairWrap.charging #crosshair {
+  transform: scale(1.5);
+  background: #aef2ff;
+  box-shadow: 0 0 10px 2px rgba(140, 230, 255, 0.9);
+}
+
+#crosshairWrap.maxCharge #chargeRingFg {
+  stroke: #ffffff;
+  filter: drop-shadow(0 0 10px #ffffff);
+}
+
+/* Hitmarker & Visuals */
+#hitmarker {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  width: 22px;
+  height: 22px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#hitmarker::before, #hitmarker::after {
+  content: '';
+  position: absolute;
+  background: #ffffff;
+}
+
+#hitmarker::before {
+  left: 10px;
+  width: 2px;
+  height: 22px;
+}
+
+#hitmarker::after {
+  top: 10px;
+  width: 22px;
+  height: 2px;
+}
+
+#damageFlash {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at center, rgba(0, 150, 255, 0) 40%, rgba(0, 120, 220, 0.55) 100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+#waveClear {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 28px;
+  font-weight: 800;
+  color: #8ff0ff;
+  opacity: 0;
+  text-align: center;
+  letter-spacing: 3px;
+  text-shadow: 0 0 16px rgba(140, 240, 255, 0.8);
+}
+
+#killFeed {
+  position: absolute;
+  top: 85px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.killMsg {
+  background: rgba(10, 25, 40, 0.7);
+  border-left: 3px solid #6dd9ff;
+  padding: 5px 12px;
+  border-radius: 4px;
+  color: #ffffff;
+  opacity: 1;
+  transition: opacity 0.6s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+/* Ability Bar */
+#abilityBar, #abilityBarAndrew {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 16px;
+}
+
+.ability {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.abIconRow {
+  display: flex;
+  gap: 4px;
+}
+
+.abIcon {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  background: rgba(15, 25, 38, 0.65);
+  border: 2px solid rgba(140, 230, 255, 0.35);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+.abIconSingle {
+  width: 56px;
+  height: 56px;
+  font-size: 24px;
+}
+
+.abFill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 0%;
+  background: rgba(0, 0, 0, 0.75);
+  transition: height 0.08s linear;
+}
+
+.abLabel {
+  margin-top: 5px;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-align: center;
+  opacity: 0.9;
+  line-height: 1.3;
+}
+
+.abKey {
+  font-size: 9px;
+  opacity: 0.7;
+  font-weight: 700;
+  color: #8ff0ff;
+}
+
+/* Active Slide Boost Style */
+.ability.active .abIconSingle {
+  box-shadow: 0 0 18px 4px rgba(100, 230, 255, 0.95);
+  border-color: #9fe8ff;
+  background: rgba(20, 60, 90, 0.85);
+  transform: scale(1.06);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+/* Overlays */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(3, 8, 14, 0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  text-align: center;
+  z-index: 10;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.overlay h1 {
+  font-size: 42px;
+  margin: 0 0 10px;
+  letter-spacing: 3px;
+  color: #8ff0ff;
+  text-shadow: 0 0 20px rgba(100, 220, 255, 0.6);
+}
+
+.overlay p {
+  opacity: 0.85;
+  max-width: 540px;
+  line-height: 1.7;
+  margin: 6px 0;
+  font-size: 14px;
+}
+
+.kbd {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  padding: 2px 8px;
+  margin: 2px;
+  font-family: monospace;
+  font-size: 13px;
+  color: #8ff0ff;
+}
+
+.btn {
+  margin-top: 18px;
+  padding: 14px 40px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  background: linear-gradient(135deg, #1f8fd4, #1267a3);
+  border: 1px solid rgba(140, 230, 255, 0.4);
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 140, 255, 0.3);
+  transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
+}
+
+.btn:hover {
+  background: linear-gradient(135deg, #3fb0f0, #1f8fd4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 180, 255, 0.5);
+}
+
+.btn.secondary {
+  background: linear-gradient(135deg, #253d52, #182736);
+  border-color: rgba(140, 230, 255, 0.2);
+}
+
+.btn.secondary:hover {
+  background: linear-gradient(135deg, #35536e, #203547);
+}
+
+#statsLine {
+  margin-top: 12px;
+  font-size: 19px;
+  color: #8ff0ff;
+}
+
+#nameRow {
+  margin-top: 18px;
+}
+
+#nameInput {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  color: #fff;
+  padding: 10px 16px;
+  font-size: 15px;
+  letter-spacing: 1px;
+  text-align: center;
+  width: 240px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+#nameInput:focus {
+  border-color: #8ff0ff;
+  box-shadow: 0 0 10px rgba(140, 230, 255, 0.4);
+}
+
+#modeRow {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.modeBtn {
+  width: 200px;
+}
+
+.modeDesc {
+  font-size: 11px;
+  opacity: 0.65;
+  margin-top: 6px;
+  max-width: 200px;
+  line-height: 1.4;
+}
+
+.modeCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#respawnScreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(3, 8, 14, 0.85);
+  backdrop-filter: blur(4px);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  text-align: center;
+  z-index: 9;
+  pointer-events: none;
+}
+
+#respawnScreen h1 {
+  font-size: 32px;
+  margin: 0 0 6px;
+  letter-spacing: 3px;
+  color: #ff6b6b;
+  text-shadow: 0 0 16px rgba(255, 80, 80, 0.6);
+}
+
+#respawnScreen p {
+  opacity: 0.85;
+  font-size: 15px;
+}
+
+#respawnCount {
+  font-size: 48px;
+  font-weight: 800;
+  color: #8ff0ff;
+  margin-top: 10px;
+  text-shadow: 0 0 20px rgba(100, 220, 255, 0.8);
+}
+
+</style>
+</head>
+<body>
+
+<div id="startScreen" class="overlay">
+  <h1>HYPERSWAG ARENA</h1>
+  <p id="charDesc">You're Hyperswag. Unleash your frost powers, charge massive explosive snowballs, and dominate the arena.</p>
+
+  <div id="charRow" style="display:flex; gap:14px; justify-content:center; margin:14px 0;">
+    <button class="btn modeBtn" id="charHyperswagBtn" style="min-width:170px;">HYPERSWAG</button>
+    <button class="btn secondary modeBtn" id="charAndrewBtn" style="min-width:170px;">DR. ANDREW</button>
+  </div>
+
+  <p id="controlsHyperswag">
+    <span class="kbd">W A S D</span> Move
+    <span class="kbd">MOUSE</span> Look
+    <span class="kbd">SPACE</span> Jump
+    <span class="kbd">ESC</span> Pause
+  </p>
+  <p id="controlsHyperswag2">
+    <span class="kbd">HOLD LMB</span> Charge &amp; Throw Snowball
+    <span class="kbd">RMB</span> Punch &times;2
+    <span class="kbd">E</span> 2X Super Slide (5s)
+    <span class="kbd">Q</span> Ice Spike
+    <span class="kbd">R</span> Tail Slam
+  </p>
+  <p id="controlsAndrew" style="display:none;">
+    <span class="kbd">W A S D</span> Move
+    <span class="kbd">MOUSE</span> Look
+    <span class="kbd">SPACE</span> Jump
+    <span class="kbd">ESC</span> Pause
+  </p>
+  <p id="controlsAndrew2" style="display:none;">
+    <span class="kbd">HOLD LMB</span> Lightning Beam (drains &amp; recharges)
+    <span class="kbd">RMB</span> Fiery Punch (knockback)
+    <span class="kbd">E</span> Skyfall Zap (roots 0.5s)
+    <span class="kbd">R</span> Fire Aura (burn DoT)
+    <span class="kbd">Q</span> Lightning Wave (slow, instant kill)
+  </p>
+  
+  <div id="nameRow">
+    <input id="nameInput" maxlength="16" placeholder="ENTER YOUR NAME" value="">
+  </div>
+
+  <div id="modeRow">
+    <div class="modeCol">
+      <button class="btn modeBtn" id="startWavesBtn">WAVES SURVIVAL</button>
+      <div class="modeDesc">Solo survival against scaling bot waves. Practice your aim and abilities.</div>
+    </div>
+    <div class="modeCol">
+      <button class="btn secondary modeBtn" id="startOnlineBtn">ONLINE ARENA</button>
+      <div class="modeDesc">Real-time free-for-all against other players. 5s respawn upon elimination. Open 2 tabs to test!</div>
+    </div>
+  </div>
+
+  <div id="connectionBadge" style="margin-top:18px;padding:7px 16px;background:rgba(15,30,50,0.6);border:1px solid rgba(140,230,255,0.25);border-radius:20px;font-size:12px;color:#aef2ff;display:inline-flex;align-items:center;gap:8px;">
+    <span id="connDot" style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#4dff88;box-shadow:0 0 8px #4dff88;"></span>
+    <span id="connStatusText">Connecting to server...</span>
+  </div>
+  
+  <div style="margin-top:10px;font-size:11px;opacity:0.65;max-width:480px;line-height:1.4;">
+    To test online multiplayer locally: Run <code>node server.js</code>, then open <strong>http://localhost:3000</strong> in two separate browser tabs!
+  </div>
+</div>
+
+<div id="pauseScreen" class="overlay" style="display:none;">
+  <h1>PAUSED</h1>
+  <p>Click anywhere to resume</p>
+</div>
+
+<div id="gameOverScreen" class="overlay" style="display:none;">
+  <h1 style="color:#ff6b6b;">YOU DIED</h1>
+  <div id="statsLine"></div>
+  <button class="btn" id="restartBtn">PLAY AGAIN</button>
+</div>
+
+<div id="respawnScreen">
+  <h1>ELIMINATED</h1>
+  <p id="respawnBy"></p>
+  <div id="respawnCount">5</div>
+</div>
+
+<div id="hud" style="display:none;">
+  <div id="healthWrap">
+    <div id="healthLabel">
+      <span>HEALTH</span>
+      <span id="healthNum">100 / 100</span>
+    </div>
+    <div id="healthBarBg"><div id="healthBarFg"></div></div>
+  </div>
+
+  <div id="waveText">WAVE 1</div>
+  <div id="onlineStatus" style="display:none;"></div>
+  <div id="scoreText">SCORE 0</div>
+  <div id="waveClear"></div>
+  <div id="killFeed"></div>
+  <div id="damageFlash"></div>
+
+  <!-- Crosshair with Circular Snowball Charge Ring -->
+  <div id="crosshairWrap">
+    <svg id="chargeRing" viewBox="0 0 48 48">
+      <circle id="chargeRingBg" cx="24" cy="24" r="20" />
+      <circle id="chargeRingFg" cx="24" cy="24" r="20" />
+    </svg>
+    <div id="crosshair"></div>
+  </div>
+
+  <div id="hitmarker"></div>
+
+  <div id="abilityBar">
+    <div class="ability" id="ab-punch">
+      <div class="abIconRow">
+        <div class="abIcon" id="ab-punch-1"><div class="abFill"></div>&#128074;</div>
+        <div class="abIcon" id="ab-punch-2"><div class="abFill"></div>&#128074;</div>
+      </div>
+      <div class="abLabel">PUNCH<br><span class="abKey">RMB</span></div>
+    </div>
+    <div class="ability" id="ab-slide">
+      <div class="abIcon abIconSingle" id="ab-slide-icon"><div class="abFill"></div>&#9889;</div>
+      <div class="abLabel">2X SLIDE (5s)<br><span class="abKey">E</span></div>
+    </div>
+    <div class="ability" id="ab-icicle">
+      <div class="abIcon abIconSingle" id="ab-icicle-icon"><div class="abFill"></div>&#10052;&#65039;</div>
+      <div class="abLabel">ICE SPIKE<br><span class="abKey">Q</span></div>
+    </div>
+    <div class="ability" id="ab-tailwhack">
+      <div class="abIcon abIconSingle" id="ab-tailwhack-icon"><div class="abFill"></div>&#127925;</div>
+      <div class="abLabel">TAIL SLAM<br><span class="abKey">R</span></div>
+    </div>
+  </div>
+
+  <div id="abilityBarAndrew" style="display:none;">
+    <div class="ability" id="ab-beam">
+      <div class="abIcon abIconSingle" id="ab-beam-icon"><div class="abFill"></div>&#9889;</div>
+      <div class="abLabel">LIGHTNING BEAM<br><span class="abKey">HOLD LMB</span></div>
+    </div>
+    <div class="ability" id="ab-fistpunch">
+      <div class="abIcon abIconSingle" id="ab-fistpunch-icon"><div class="abFill"></div>&#128293;</div>
+      <div class="abLabel">FIERY PUNCH<br><span class="abKey">RMB</span></div>
+    </div>
+    <div class="ability" id="ab-zap">
+      <div class="abIcon abIconSingle" id="ab-zap-icon"><div class="abFill"></div>&#127785;&#65039;</div>
+      <div class="abLabel">SKYFALL ZAP<br><span class="abKey">E</span></div>
+    </div>
+    <div class="ability" id="ab-fireaura">
+      <div class="abIcon abIconSingle" id="ab-fireaura-icon"><div class="abFill"></div>&#128293;</div>
+      <div class="abLabel">FIRE AURA<br><span class="abKey">R</span></div>
+    </div>
+    <div class="ability" id="ab-wave">
+      <div class="abIcon abIconSingle" id="ab-wave-icon"><div class="abFill"></div>&#127754;</div>
+      <div class="abLabel">LIGHTNING WAVE<br><span class="abKey">Q</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Three.js library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<!-- Modular Game Code -->
+<script>
+// js/effects.js - Sound effects, 3D floating damage numbers & particle systems
+
+let audioCtx = null;
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+
+function tone(freq, dur, type = 'sine', vol = 0.15, freqEnd = null) {
+  if (!audioCtx) return;
+  try {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    if (freqEnd) osc.frequency.exponentialRampToValueAtTime(Math.max(freqEnd, 1), audioCtx.currentTime + dur);
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + dur);
+  } catch (e) {}
+}
+
+const playHitSound = () => tone(900, 0.06, 'sine', 0.15, 300);
+const playDeathSound = () => tone(300, 0.35, 'sawtooth', 0.15, 60);
+const playHurtSound = () => tone(140, 0.2, 'sawtooth', 0.2, 50);
+const playEmptySound = () => tone(150, 0.05, 'square', 0.06);
+const playPunchSound = () => tone(250, 0.08, 'square', 0.18, 120);
+const playTailWhackSound = () => tone(180, 0.25, 'sawtooth', 0.2, 60);
+const playSlideStartSound = () => tone(500, 0.15, 'triangle', 0.12, 850);
+const playSlideStopSound = () => tone(350, 0.1, 'triangle', 0.08, 150);
+const playIcicleSound = () => {
+  tone(300, 0.15, 'sine', 0.12, 900);
+  setTimeout(() => tone(150, 0.08, 'square', 0.16, 80), 300);
+};
+const playShootSoundBot = () => tone(420, 0.08, 'square', 0.08, 140);
+
+// Snowball specific audio
+const playSnowballChargeSound = (pitch = 300) => tone(pitch, 0.08, 'sine', 0.06, pitch + 50);
+const playSnowballThrowSound = (power = 1) => tone(220 + power * 150, 0.18, 'triangle', 0.2, 100);
+const playSnowballExplodeSound = (power = 1) => {
+  tone(120, 0.3, 'sawtooth', 0.25 * power, 40);
+  tone(450, 0.15, 'sine', 0.15 * power, 100);
+};
+
+// ---------- 3D Floating Damage Numbers ----------
+const damageNumbers = [];
+
+function spawnDamageNumber(pos, amount, isCrit = false) {
+  if (typeof scene === 'undefined') return;
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+
+  ctx.font = isCrit ? 'bold 36px Segoe UI, Arial, sans-serif' : 'bold 30px Segoe UI, Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+  ctx.fillStyle = isCrit ? '#ffcc00' : '#ffffff';
+
+  const text = (amount > 0 ? '-' : '') + Math.round(amount) + (isCrit ? '!' : '');
+  ctx.strokeText(text, 64, 32);
+  ctx.fillText(text, 64, 32);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true });
+  const sprite = new THREE.Sprite(mat);
+
+  // Random slight horizontal drift
+  const spreadX = (Math.random() - 0.5) * 0.4;
+  const spreadZ = (Math.random() - 0.5) * 0.4;
+  sprite.position.set(pos.x + spreadX, pos.y + 1.8, pos.z + spreadZ);
+  sprite.scale.set(isCrit ? 1.4 : 1.1, isCrit ? 0.7 : 0.55, 1);
+  sprite.renderOrder = 2000;
+
+  scene.add(sprite);
+
+  damageNumbers.push({
+    sprite,
+    createdAt: performance.now(),
+    duration: 900,
+    startY: sprite.position.y
+  });
+}
+
+function updateDamageNumbers(now) {
+  for (let i = damageNumbers.length - 1; i >= 0; i--) {
+    const dn = damageNumbers[i];
+    const elapsed = now - dn.createdAt;
+    const progress = elapsed / dn.duration;
+
+    if (progress >= 1) {
+      scene.remove(dn.sprite);
+      if (dn.sprite.material.map) dn.sprite.material.map.dispose();
+      dn.sprite.material.dispose();
+      damageNumbers.splice(i, 1);
+    } else {
+      // Float upwards with deceleration
+      dn.sprite.position.y = dn.startY + Math.sin(progress * Math.PI * 0.5) * 0.9;
+      // Fade out in second half
+      if (progress > 0.4) {
+        dn.sprite.material.opacity = 1 - (progress - 0.4) / 0.6;
+      }
+    }
+  }
+}
+
+// ---------- Particle Systems & Visual FX ----------
+const tracers = [];
+const sparks = [];
+const slideTrail = [];
+const snowballParticles = [];
+
+function spawnTracer(start, end, color = 0xff6666) {
+  const line = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([start.clone(), end.clone()]),
+    new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.95 })
+  );
+  scene.add(line);
+  tracers.push({ line, createdAt: performance.now() });
+}
+
+function updateTracers(now) {
+  for (let i = tracers.length - 1; i >= 0; i--) {
+    if (now - tracers[i].createdAt > 80) {
+      scene.remove(tracers[i].line);
+      tracers[i].line.geometry.dispose();
+      tracers[i].line.material.dispose();
+      tracers.splice(i, 1);
+    }
+  }
+}
+
+function spawnHitSpark(point, color = 0xffee88, count = 7) {
+  for (let i = 0; i < count; i++) {
+    const s = new THREE.Mesh(
+      new THREE.SphereGeometry(0.09, 6, 6),
+      new THREE.MeshBasicMaterial({ color })
+    );
+    s.position.copy(point);
+    scene.add(s);
+    const vel = new THREE.Vector3(
+      (Math.random() - 0.5) * 4,
+      Math.random() * 3 + 1,
+      (Math.random() - 0.5) * 4
+    );
+    sparks.push({ mesh: s, vel, createdAt: performance.now() });
+  }
+}
+
+function updateSparks(now) {
+  for (let i = sparks.length - 1; i >= 0; i--) {
+    const sp = sparks[i];
+    const age = (now - sp.createdAt) / 1000;
+    if (age > 0.35) {
+      scene.remove(sp.mesh);
+      sp.mesh.geometry.dispose();
+      sp.mesh.material.dispose();
+      sparks.splice(i, 1);
+    } else {
+      sp.mesh.position.addScaledVector(sp.vel, 0.016);
+      sp.vel.y -= 9.8 * 0.016;
+      sp.mesh.scale.setScalar(Math.max(0.01, 1 - age / 0.35));
+    }
+  }
+}
+
+function spawnSlideTrail() {
+  if (typeof player === 'undefined' || typeof scene === 'undefined') return;
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.85, 0.85),
+    new THREE.MeshBasicMaterial({ color: 0x8fe8ff, transparent: true, opacity: 0.55, side: THREE.DoubleSide })
+  );
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.position.set(player.position.x, 0.03, player.position.z);
+  scene.add(mesh);
+  slideTrail.push({ mesh, createdAt: performance.now() });
+}
+
+function updateSlideTrail(now) {
+  for (let i = slideTrail.length - 1; i >= 0; i--) {
+    const t = slideTrail[i];
+    const age = now - t.createdAt;
+    if (age > 450) {
+      scene.remove(t.mesh);
+      t.mesh.geometry.dispose();
+      t.mesh.material.dispose();
+      slideTrail.splice(i, 1);
+    } else {
+      t.mesh.material.opacity = (1 - age / 450) * 0.55;
+    }
+  }
+}
+
+// Snowball Explosion Visuals
+function spawnSnowballExplosion(pos, radius = 2, count = 18) {
+  playSnowballExplodeSound(radius);
+  // Flash burst
+  const flash = new THREE.Mesh(
+    new THREE.SphereGeometry(radius * 0.8, 12, 12),
+    new THREE.MeshBasicMaterial({ color: 0xebfaff, transparent: true, opacity: 0.85 })
+  );
+  flash.position.copy(pos);
+  scene.add(flash);
+
+  const start = performance.now();
+  function animateFlash() {
+    const elapsed = performance.now() - start;
+    if (elapsed < 140) {
+      const p = elapsed / 140;
+      flash.scale.setScalar(1 + p * 0.5);
+      flash.material.opacity = 0.85 * (1 - p);
+      requestAnimationFrame(animateFlash);
+    } else {
+      scene.remove(flash);
+      flash.geometry.dispose();
+      flash.material.dispose();
+    }
+  }
+  animateFlash();
+
+  // Debris chunks
+  for (let i = 0; i < count; i++) {
+    const size = 0.08 + Math.random() * 0.16 * radius;
+    const chunk = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(size, 0),
+      new THREE.MeshStandardMaterial({ color: 0xf0faff, roughness: 0.2 })
+    );
+    chunk.position.copy(pos);
+    scene.add(chunk);
+
+    const speed = 4 + Math.random() * 6 * radius;
+    const angle = Math.random() * Math.PI * 2;
+    const upward = Math.random() * 4 + 2;
+    const vel = new THREE.Vector3(Math.cos(angle) * speed, upward, Math.sin(angle) * speed);
+
+    snowballParticles.push({
+      mesh: chunk,
+      vel,
+      rotSpeed: (Math.random() - 0.5) * 8,
+      createdAt: performance.now(),
+      maxAge: 0.6 + Math.random() * 0.3
+    });
+  }
+}
+
+function updateSnowballParticles(now, dt) {
+  for (let i = snowballParticles.length - 1; i >= 0; i--) {
+    const p = snowballParticles[i];
+    const age = (now - p.createdAt) / 1000;
+    if (age > p.maxAge) {
+      scene.remove(p.mesh);
+      p.mesh.geometry.dispose();
+      p.mesh.material.dispose();
+      snowballParticles.splice(i, 1);
+    } else {
+      p.mesh.position.addScaledVector(p.vel, dt);
+      p.vel.y -= 16 * dt; // Gravity
+      p.mesh.rotation.x += p.rotSpeed * dt;
+      p.mesh.rotation.y += p.rotSpeed * dt;
+      if (p.mesh.position.y < 0.05) {
+        p.mesh.position.y = 0.05;
+        p.vel.y = -p.vel.y * 0.3; // Bounce
+      }
+      p.mesh.scale.setScalar(Math.max(0.01, 1 - age / p.maxAge));
+    }
+  }
+}
+
+function spawnIcicleSpike(pos) {
+  const spike = new THREE.Mesh(
+    new THREE.ConeGeometry(0.32, 1.6, 6),
+    new THREE.MeshStandardMaterial({ color: 0xcdf3ff, transparent: true, opacity: 0.95, roughness: 0.15, metalness: 0.1 })
+  );
+  spike.position.set(pos.x, 0, pos.z);
+  spike.scale.setScalar(0.01);
+  scene.add(spike);
+  const start = performance.now();
+  function grow() {
+    const t = (performance.now() - start) / 180;
+    if (t < 1) {
+      spike.scale.setScalar(Math.min(1, t));
+      spike.position.y = Math.min(1, t) * 0.8;
+      requestAnimationFrame(grow);
+    } else {
+      spike.scale.setScalar(1);
+      spike.position.y = 0.8;
+      setTimeout(() => {
+        let op = 1;
+        function fade() {
+          op -= 0.04;
+          spike.material.opacity = Math.max(0, op);
+          if (op > 0) requestAnimationFrame(fade);
+          else {
+            scene.remove(spike);
+            spike.geometry.dispose();
+            spike.material.dispose();
+          }
+        }
+        fade();
+      }, 500);
+    }
+  }
+  grow();
+}
+
+</script>
+<script>
+// js/snowball.js - Charge-up Snowball Weapon & Projectile Physics
+
+const MAX_CHARGE_TIME = 2200; // ms to reach max power
+const MIN_SNOWBALL_DMG = 18;
+const MAX_SNOWBALL_DMG = 90;
+const MIN_SNOWBALL_SCALE = 0.28;
+const MAX_SNOWBALL_SCALE = 1.9;
+const MIN_SPLASH_RADIUS = 1.6;
+const MAX_SPLASH_RADIUS = 5.2;
+
+class SnowballManager {
+  constructor() {
+    this.charging = false;
+    this.chargeStart = 0;
+    this.chargePercent = 0;
+    this.chargeMesh = null;
+    this.projectiles = []; // Active flying snowballs
+    this.lastChargeAudioTime = 0;
+    this.trajectoryDots = []; // Reusable pool of trajectory preview dots
+    this.trajectoryDotCount = 26;
+  }
+
+  init(scene) {
+    this.scene = scene;
+
+    // Create persistent charging snowball mesh attached to scene
+    const geo = new THREE.DodecahedronGeometry(1, 1);
+    const mat = new THREE.MeshStandardMaterial({
+      color: 0xedf9ff,
+      roughness: 0.15,
+      metalness: 0.05,
+      transparent: true,
+      opacity: 0.95
+    });
+    this.chargeMesh = new THREE.Mesh(geo, mat);
+    this.chargeMesh.visible = false;
+    this.scene.add(this.chargeMesh);
+
+    // Create a reusable pool of small dots to draw the predicted arc
+    const dotGeo = new THREE.SphereGeometry(0.09, 8, 8);
+    for (let i = 0; i < this.trajectoryDotCount; i++) {
+      const fade = 1 - (i / this.trajectoryDotCount) * 0.55; // fainter further out
+      const dotMat = new THREE.MeshBasicMaterial({
+        color: 0x9fe9ff,
+        transparent: true,
+        opacity: 0.85 * fade
+      });
+      const dot = new THREE.Mesh(dotGeo, dotMat);
+      dot.visible = false;
+      this.scene.add(dot);
+      this.trajectoryDots.push(dot);
+    }
+  }
+
+  // Hide every trajectory dot (called when not charging / out of combat state)
+  hideTrajectoryPreview() {
+    for (const dot of this.trajectoryDots) dot.visible = false;
+  }
+
+  // Simulate the same physics used in releaseThrow()/updateProjectiles() to
+  // preview where the snowball will land, without actually throwing it.
+  updateTrajectoryPreview(player) {
+    const power = Math.max(0.15, this.chargePercent);
+    const radius = MIN_SNOWBALL_SCALE + power * (MAX_SNOWBALL_SCALE - MIN_SNOWBALL_SCALE);
+
+    const fwd = new THREE.Vector3(
+      -Math.sin(player.yaw) * Math.cos(player.pitch),
+      Math.sin(player.pitch) + 0.06,
+      -Math.cos(player.yaw) * Math.cos(player.pitch)
+    ).normalize();
+
+    const origin = player.position.clone().add(new THREE.Vector3(0, 1.2, 0)).add(fwd.clone().multiplyScalar(0.6));
+    const speed = 28 + power * 12;
+
+    const pos = origin.clone();
+    const vel = fwd.clone().multiplyScalar(speed);
+    const step = 0.05; // seconds per simulated sample
+
+    let shown = 0;
+    for (let i = 0; i < this.trajectoryDotCount; i++) {
+      vel.y -= 14.0 * step; // matches gravity in updateProjectiles()
+      pos.addScaledVector(vel, step);
+
+      // Stop the preview at the ground or the arena walls, same as real collision
+      if (pos.y <= radius * 0.6 || Math.abs(pos.x) >= 28 || Math.abs(pos.z) >= 28) break;
+
+      const dot = this.trajectoryDots[i];
+      dot.position.copy(pos);
+      dot.visible = true;
+      shown++;
+    }
+
+    // Hide any leftover dots from a previous, longer-range preview
+    for (let i = shown; i < this.trajectoryDotCount; i++) {
+      this.trajectoryDots[i].visible = false;
+    }
+  }
+
+  startCharge(now) {
+    if (this.charging) return;
+    this.charging = true;
+    this.chargeStart = now;
+    this.chargePercent = 0;
+    this.chargeMesh.visible = true;
+    this.chargeMesh.scale.setScalar(MIN_SNOWBALL_SCALE);
+
+    const crosshair = document.getElementById('crosshairWrap');
+    if (crosshair) crosshair.classList.add('charging');
+  }
+
+  updateCharging(now, player, dt) {
+    if (!this.charging) {
+      this.chargeMesh.visible = false;
+      this.hideTrajectoryPreview();
+      return;
+    }
+
+    const elapsed = now - this.chargeStart;
+    this.chargePercent = Math.min(1.0, elapsed / MAX_CHARGE_TIME);
+
+    // Audio feedback ascending
+    if (now - this.lastChargeAudioTime > 260) {
+      this.lastChargeAudioTime = now;
+      playSnowballChargeSound(260 + this.chargePercent * 340);
+    }
+
+    // Scale and position in front of player's hands
+    const currentScale = MIN_SNOWBALL_SCALE + this.chargePercent * (MAX_SNOWBALL_SCALE - MIN_SNOWBALL_SCALE);
+    this.chargeMesh.scale.setScalar(currentScale);
+
+    // Subtle vibration when max charged
+    const jitter = this.chargePercent >= 0.98 ? (Math.random() - 0.5) * 0.04 : 0;
+    const fwd = new THREE.Vector3(-Math.sin(player.yaw), 0, -Math.cos(player.yaw));
+    const right = new THREE.Vector3(Math.cos(player.yaw), 0, -Math.sin(player.yaw));
+
+    const handPos = player.position.clone()
+      .add(new THREE.Vector3(0, 1.0 + jitter, 0))
+      .add(fwd.clone().multiplyScalar(0.75 + currentScale * 0.5))
+      .add(right.clone().multiplyScalar(0.2));
+
+    this.chargeMesh.position.copy(handPos);
+    this.chargeMesh.rotation.y += 4 * dt;
+    this.chargeMesh.rotation.x += 2 * dt;
+
+    // HUD Circular Charge Meter
+    const ringFg = document.getElementById('chargeRingFg');
+    const crosshair = document.getElementById('crosshairWrap');
+    if (ringFg) {
+      const maxOffset = 125.6;
+      const offset = maxOffset * (1 - this.chargePercent);
+      ringFg.style.strokeDashoffset = offset;
+    }
+    if (crosshair) {
+      crosshair.classList.toggle('maxCharge', this.chargePercent >= 0.98);
+    }
+
+    this.updateTrajectoryPreview(player);
+  }
+
+  releaseThrow(now, player) {
+    if (!this.charging) return;
+    this.charging = false;
+    this.chargeMesh.visible = false;
+    this.hideTrajectoryPreview();
+
+    const crosshair = document.getElementById('crosshairWrap');
+    if (crosshair) {
+      crosshair.classList.remove('charging');
+      crosshair.classList.remove('maxCharge');
+    }
+
+    const power = Math.max(0.15, this.chargePercent);
+    const dmg = MIN_SNOWBALL_DMG + power * (MAX_SNOWBALL_DMG - MIN_SNOWBALL_DMG);
+    const radius = MIN_SNOWBALL_SCALE + power * (MAX_SNOWBALL_SCALE - MIN_SNOWBALL_SCALE);
+    const splashRadius = MIN_SPLASH_RADIUS + power * (MAX_SPLASH_RADIUS - MIN_SPLASH_RADIUS);
+
+    // Launch trajectory from player eyes
+    const fwd = new THREE.Vector3(
+      -Math.sin(player.yaw) * Math.cos(player.pitch),
+      Math.sin(player.pitch) + 0.06, // slight natural arc
+      -Math.cos(player.yaw) * Math.cos(player.pitch)
+    ).normalize();
+
+    const origin = player.position.clone().add(new THREE.Vector3(0, 1.2, 0)).add(fwd.clone().multiplyScalar(0.6));
+    const speed = 28 + power * 12;
+    const velocity = fwd.clone().multiplyScalar(speed);
+
+    playSnowballThrowSound(power);
+
+    // Create flying mesh
+    const pMesh = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(radius, 1),
+      new THREE.MeshStandardMaterial({ color: 0xf0faff, roughness: 0.15 })
+    );
+    pMesh.position.copy(origin);
+    this.scene.add(pMesh);
+
+    const projId = 'sb_' + localId + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+
+    const projectile = {
+      id: projId,
+      mesh: pMesh,
+      pos: origin.clone(),
+      vel: velocity,
+      radius,
+      dmg,
+      splashRadius,
+      shooterId: localId,
+      shooterName: localName,
+      createdAt: now,
+      isLocal: true
+    };
+
+    this.projectiles.push(projectile);
+
+    // Broadcast throw to other players
+    if (state.mode === 'online') {
+      net.send({
+        type: 'snowball_throw',
+        projId,
+        id: localId,
+        shooterName: localName,
+        x: Math.round(origin.x * 100) / 100,
+        y: Math.round(origin.y * 100) / 100,
+        z: Math.round(origin.z * 100) / 100,
+        vx: Math.round(velocity.x * 100) / 100,
+        vy: Math.round(velocity.y * 100) / 100,
+        vz: Math.round(velocity.z * 100) / 100,
+        radius: Math.round(radius * 100) / 100,
+        dmg: Math.round(dmg),
+        splashRadius: Math.round(splashRadius * 100) / 100
+      });
+    }
+
+    this.chargePercent = 0;
+  }
+
+  spawnRemoteSnowball(data) {
+    if (!this.scene) return;
+    const radius = data.radius || 0.5;
+    const pMesh = new THREE.Mesh(
+      new THREE.DodecahedronGeometry(radius, 1),
+      new THREE.MeshStandardMaterial({ color: 0xf0faff, roughness: 0.15 })
+    );
+    const origin = new THREE.Vector3(data.x, data.y, data.z);
+    pMesh.position.copy(origin);
+    this.scene.add(pMesh);
+
+    this.projectiles.push({
+      id: data.projId,
+      mesh: pMesh,
+      pos: origin,
+      vel: new THREE.Vector3(data.vx, data.vy, data.vz),
+      radius,
+      dmg: data.dmg || 30,
+      splashRadius: data.splashRadius || 2.5,
+      shooterId: data.id,
+      shooterName: data.shooterName || 'Hyperswag',
+      createdAt: performance.now(),
+      isLocal: false
+    });
+  }
+
+  updateProjectiles(now, dt, bots, remotePlayers, obstacles) {
+    for (let i = this.projectiles.length - 1; i >= 0; i--) {
+      const p = this.projectiles[i];
+
+      // Physics integration
+      p.vel.y -= 14.0 * dt; // Gravity arc
+      p.pos.addScaledVector(p.vel, dt);
+      p.mesh.position.copy(p.pos);
+      p.mesh.rotation.x += 6 * dt;
+      p.mesh.rotation.y += 4 * dt;
+
+      let hit = false;
+      let hitPoint = p.pos.clone();
+
+      // Ground collision
+      if (p.pos.y <= p.radius * 0.6) {
+        hit = true;
+        hitPoint.y = 0.1;
+      }
+
+      // Arena walls / boundary
+      if (Math.abs(p.pos.x) >= 28 || Math.abs(p.pos.z) >= 28) {
+        hit = true;
+      }
+
+      // Obstacle collision
+      if (!hit && obstacles) {
+        for (const ob of obstacles) {
+          const dx = p.pos.x - ob.x;
+          const dz = p.pos.z - ob.z;
+          if (Math.hypot(dx, dz) < ob.r + p.radius && p.pos.y <= ob.height) {
+            hit = true;
+            break;
+          }
+        }
+      }
+
+      // Bot collision (for local player's snowball)
+      if (!hit && p.isLocal && bots) {
+        for (const b of bots) {
+          if (!b.alive) continue;
+          if (p.pos.distanceTo(b.group.position.clone().add(new THREE.Vector3(0, 1, 0))) < 1.2 + p.radius) {
+            hit = true;
+            break;
+          }
+        }
+      }
+
+      // Remote player collision (for local player's snowball)
+      if (!hit && p.isLocal && state.mode === 'online' && remotePlayers) {
+        for (const [id, rp] of remotePlayers) {
+          if (!rp.data || rp.data.alive === false) continue;
+          if (p.pos.distanceTo(rp.displayPos.clone().add(new THREE.Vector3(0, 1, 0))) < 1.3 + p.radius) {
+            hit = true;
+            break;
+          }
+        }
+      }
+
+      // Max flight time timeout
+      if (now - p.createdAt > 3500) {
+        hit = true;
+      }
+
+      if (hit) {
+        // Explode
+        this.explode(p, hitPoint, bots, remotePlayers);
+        this.scene.remove(p.mesh);
+        p.mesh.geometry.dispose();
+        p.mesh.material.dispose();
+        this.projectiles.splice(i, 1);
+      }
+    }
+  }
+
+  explode(p, hitPoint, bots, remotePlayers) {
+    spawnSnowballExplosion(hitPoint, p.radius * 2.0);
+
+    // Only shooter calculates splash damage to avoid duplicate hits
+    if (!p.isLocal) return;
+
+    let hitCount = 0;
+
+    // Damage bots in splash radius
+    if (bots) {
+      for (const b of bots) {
+        if (!b.alive) continue;
+        const targetPos = b.group.position.clone().add(new THREE.Vector3(0, 1, 0));
+        const dist = hitPoint.distanceTo(targetPos);
+        if (dist <= p.splashRadius + 0.8) {
+          const falloff = 1 - Math.max(0, dist / (p.splashRadius + 0.8)) * 0.5;
+          const finalDmg = Math.round(p.dmg * falloff);
+          const isCrit = p.radius >= 1.2;
+          b.takeDamage(finalDmg, targetPos, 0xebfaff);
+          spawnDamageNumber(targetPos, finalDmg, isCrit);
+          hitCount++;
+        }
+      }
+    }
+
+    // Damage remote players in splash radius
+    if (state.mode === 'online' && remotePlayers) {
+      for (const [id, rp] of remotePlayers) {
+        if (!rp.data || rp.data.alive === false) continue;
+        const targetPos = rp.displayPos.clone().add(new THREE.Vector3(0, 1, 0));
+        const dist = hitPoint.distanceTo(targetPos);
+        if (dist <= p.splashRadius + 0.8) {
+          const falloff = 1 - Math.max(0, dist / (p.splashRadius + 0.8)) * 0.5;
+          const finalDmg = Math.round(p.dmg * falloff);
+          const isCrit = p.radius >= 1.2;
+          spawnHitSpark(targetPos, 0xcdf3ff);
+          spawnDamageNumber(targetPos, finalDmg, isCrit);
+          sendHitEvent(id, finalDmg, isCrit ? 'snowball_crit' : 'snowball');
+          hitCount++;
+        }
+      }
+    }
+
+    if (hitCount > 0) {
+      flashHitMarker();
+      playHitSound();
+    }
+  }
+}
+
+const snowballManager = new SnowballManager();
+
+</script>
+<script>
+// js/player.js - Character builder, movement, 5-second 2X slide, and combat abilities
+
+const PUNCH_MAX = 2, PUNCH_RECHARGE = 5000;
+const SLIDE_DURATION = 5000;         // 5.0 seconds slide time
+const SLIDE_COOLDOWN = 3500;         // 3.5 seconds cooldown
+const SLIDE_SPEED_MULT = 2.35;       // 2.35x speed boost when sliding
+const SLIDE_TRAIL_INTERVAL = 60;
+
+const ICICLE_COOLDOWN = 4500, ICICLE_RANGE = 14, ICICLE_DMG_MIN = 35, ICICLE_DMG_MAX = 52, ICICLE_TELEGRAPH = 320;
+const TAILWHACK_COOLDOWN = 3200, TAILWHACK_RANGE = 3.6, TAILWHACK_HALFANGLE = 75 * Math.PI / 180, TAILWHACK_DMG_MIN = 34, TAILWHACK_DMG_MAX = 46, TAILWHACK_KNOCK = 1.0;
+const PUNCH_RANGE = 2.8, PUNCH_HALFANGLE = 55 * Math.PI / 180, PUNCH_DMG_MIN = 16, PUNCH_DMG_MAX = 26, PUNCH_KNOCK = 0.5;
+
+// ---------- Dr. Andrew - Lightning Kit ----------
+const BEAM_MAX_CHARGE = 100;            // Total "ammo" for the beam
+const BEAM_DRAIN_PER_SEC = 32;          // Charge drained per second while firing
+const BEAM_RECHARGE_PER_SEC = 20;       // Charge regained per second while not firing
+const BEAM_RECHARGE_DELAY = 650;        // ms after releasing before recharge starts
+const BEAM_TICK_INTERVAL = 120;         // ms between damage ticks while beaming
+const BEAM_TICK_DMG = 6;                // damage per tick to primary target
+const BEAM_HALFANGLE = 9 * Math.PI / 180; // narrow aim cone - beam requires aiming
+const BEAM_RANGE = 24;
+const BEAM_CHAIN_RADIUS = 7;            // how far the beam can bounce to a new target
+const BEAM_CHAIN_MAX_TARGETS = 3;       // primary + up to this many bounces
+const BEAM_CHAIN_FALLOFF = 0.72;        // damage multiplier per bounce
+
+const ZAP_COOLDOWN = 4200, ZAP_RANGE = 16, ZAP_TELEGRAPH = 260;
+const ZAP_DMG_MIN = 22, ZAP_DMG_MAX = 32, ZAP_ROOT_DURATION = 500;
+
+const FIREAURA_COOLDOWN = 9000, FIREAURA_RADIUS = 5.5;
+const FIREAURA_TICK_MS = 250, FIREAURA_TICK_DMG = 9, FIREAURA_DMG_CAP = 140;
+
+const WAVE_COOLDOWN = 15000, WAVE_GROW_SPEED = 3.2, WAVE_MAX_RADIUS = 32, WAVE_THICKNESS = 1.5, WAVE_MAX_LIFETIME = 12000;
+
+const FISTPUNCH_COOLDOWN = 2600, FISTPUNCH_RANGE = 2.9, FISTPUNCH_HALFANGLE = 55 * Math.PI / 180;
+const FISTPUNCH_DMG_MIN = 22, FISTPUNCH_DMG_MAX = 32, FISTPUNCH_KNOCK = 2.4;
+
+const HEALTH_REGEN_DELAY = 4000;
+const HEALTH_REGEN_RATE = 8;
+const RESPAWN_TIME = 5000;
+
+function genId() {
+  return 'p_' + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-4);
+}
+const localId = genId();
+let localName = 'Hyperswag';
+
+const player = {
+  position: new THREE.Vector3(0, 0, 0),
+  velocity: new THREE.Vector3(0, 0, 0),
+  yaw: 0,
+  pitch: 0
+};
+
+const state = {
+  active: false,
+  paused: false,
+  over: false,
+  mode: 'waves', // 'waves' | 'online'
+  character: 'hyperswag', // 'hyperswag' | 'andrew'
+  health: 100,
+  maxHealth: 100,
+  score: 0,
+  wave: 0,
+  botsAlive: 0,
+  kills: 0,
+  deaths: 0,
+  dead: false,
+  respawnAt: 0,
+  lastDamageTime: -99999,
+  rootedUntil: 0, // local player can't move while now < this
+  abilities: {
+    punchCharges: PUNCH_MAX,
+    punchChargeTimer: 0,
+    sliding: false,
+    slideEndTime: 0,
+    slideCooldownUntil: 0,
+    icicleCooldownUntil: 0,
+    tailwhackCooldownUntil: 0
+  },
+  andrew: {
+    beamCharge: BEAM_MAX_CHARGE,
+    beaming: false,
+    lastBeamStopTime: -99999,
+    lastBeamTick: -99999,
+    zapCooldownUntil: 0,
+    fireAuraActive: false,
+    fireAuraStartedAt: 0,
+    fireAuraCooldownUntil: 0,
+    fireAuraDamageDealt: new Map(), // targetKey -> total damage dealt this activation
+    waveCooldownUntil: 0,
+    fistCooldownUntil: 0
+  }
+};
+
+let punchAnimStart = -9999, tailAnimStart = -9999;
+let lastSlideTrailTime = 0;
+let onGround = true, verticalVelocity = 0;
+const GRAVITY = -22, JUMP_SPEED = 7.4;
+
+function shadeColor(hex, amt) {
+  let r = (hex >> 16) + amt, g = ((hex >> 8) & 0xff) + amt, b = (hex & 0xff) + amt;
+  return ((Math.max(0, Math.min(255, r)) << 16) | (Math.max(0, Math.min(255, g)) << 8) | Math.max(0, Math.min(255, b)));
+}
+
+function buildCharacter(tint = 0x4db8ff) {
+  const g = new THREE.Group();
+  const mainColor = tint;
+  const darkColor = shadeColor(tint, -55);
+  const skinMat = new THREE.MeshStandardMaterial({ color: 0xffd1b3, roughness: 0.6 });
+  const blueMat = new THREE.MeshStandardMaterial({ color: mainColor, roughness: 0.5 });
+  const darkMat = new THREE.MeshStandardMaterial({ color: darkColor, roughness: 0.5 });
+
+  // Body
+  const body = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.95, 0.46), blueMat);
+  body.position.y = 0.72;
+  g.add(body);
+
+  // Head
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.36, 12, 10), skinMat);
+  head.position.y = 1.48;
+  g.add(head);
+
+  // Beanie / Cap
+  const hatMat = new THREE.MeshStandardMaterial({ color: darkColor, roughness: 0.7 });
+  const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.22, 12), hatMat);
+  hat.position.y = 1.72;
+  g.add(hat);
+
+  // Sunglasses
+  const shadesMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8, roughness: 0.2 });
+  const shades = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.12, 0.12), shadesMat);
+  shades.position.set(0, 1.5, -0.34);
+  g.add(shades);
+
+  // Arms
+  const armMat = new THREE.MeshStandardMaterial({ color: mainColor, roughness: 0.55 });
+  const armGeo = new THREE.CylinderGeometry(0.1, 0.12, 0.44, 8);
+  const armL = new THREE.Mesh(armGeo, armMat);
+  armL.position.set(-0.62, 0.72, -0.02);
+  armL.rotation.z = 0.28;
+  g.add(armL);
+
+  const armR = new THREE.Mesh(armGeo, armMat);
+  armR.position.set(0.62, 0.72, -0.02);
+  armR.rotation.z = -0.28;
+  g.add(armR);
+
+  // Tail fin
+  const tailMat = new THREE.MeshStandardMaterial({ color: darkColor, roughness: 0.5 });
+  const tailFin = new THREE.Mesh(new THREE.ConeGeometry(0.25, 0.55, 4), tailMat);
+  tailFin.position.set(0, 0.85, 0.68);
+  tailFin.rotation.x = -Math.PI / 2;
+  g.add(tailFin);
+
+  // Feet
+  const footMat = new THREE.MeshStandardMaterial({ color: darkColor });
+  const footL = new THREE.Mesh(new THREE.SphereGeometry(0.15, 10, 8), footMat);
+  footL.scale.set(1, 0.5, 1.3);
+  footL.position.set(-0.28, 0.13, 0.05);
+  g.add(footL);
+  const footR = footL.clone();
+  footR.position.x = 0.28;
+  g.add(footR);
+
+  if (typeof scene !== 'undefined') scene.add(g);
+  return { group: g, armR, armL, tailFin, bodyMesh: body };
+}
+
+let character = null;
+
+function initPlayer(scene) {
+  character = buildCharacter(0x4db8ff);
+}
+
+// Swaps the player's visible model/tint to match the selected character.
+// Safe to call again on restart since it disposes the old group first.
+function rebuildCharacterForSelection() {
+  if (character && character.group && typeof scene !== 'undefined') {
+    scene.remove(character.group);
+    character.group.traverse((obj) => {
+      if (obj.geometry) obj.geometry.dispose();
+      if (obj.material) obj.material.dispose();
+    });
+  }
+  const tint = state.character === 'andrew' ? 0xff7a3a : 0x4db8ff;
+  character = buildCharacter(tint);
+}
+
+// ---------- Movement & Physics ----------
+function updatePlayer(dt, now, keys, obstacles) {
+  if (state.dead) {
+    if (character) character.group.visible = false;
+    player.velocity.set(0, 0, 0);
+    return;
+  }
+  if (character) character.group.visible = true;
+
+  const prevX = player.position.x;
+  const prevY = player.position.y;
+  const prevZ = player.position.z;
+
+  // Safety net: if the player is ever embedded inside an obstacle (bad spawn,
+  // knockback, network correction, etc.), push them back out every frame -
+  // not just while a movement key is held.
+  if (obstacles) {
+    for (const ob of obstacles) {
+      const ddx = player.position.x - ob.x, ddz = player.position.z - ob.z;
+      const d = Math.hypot(ddx, ddz);
+      const minD = ob.r + 0.5;
+      if (d < minD) {
+        if (d > 0.0001) {
+          player.position.x = ob.x + (ddx / d) * minD;
+          player.position.z = ob.z + (ddz / d) * minD;
+        } else {
+          // Exactly on the obstacle's center (e.g. degenerate spawn) - nudge out
+          player.position.x = ob.x + minD;
+          player.position.z = ob.z;
+        }
+      }
+    }
+  }
+
+  // Handle 5-second slide duration expiration
+  if (state.abilities.sliding) {
+    if (now >= state.abilities.slideEndTime) {
+      state.abilities.sliding = false;
+      state.abilities.slideCooldownUntil = now + SLIDE_COOLDOWN;
+      playSlideStopSound();
+    }
+  }
+
+  const moveDir = new THREE.Vector3();
+  const isRooted = now < state.rootedUntil;
+  if (!isRooted) {
+    if (keys['KeyW']) moveDir.z -= 1;
+    if (keys['KeyS']) moveDir.z += 1;
+    if (keys['KeyA']) moveDir.x -= 1;
+    if (keys['KeyD']) moveDir.x += 1;
+  }
+
+  if (moveDir.lengthSq() > 0) {
+    moveDir.normalize();
+    const speed = 5.5 * (state.abilities.sliding ? SLIDE_SPEED_MULT : 1);
+    const angle = player.yaw;
+    const dx = (moveDir.x * Math.cos(angle) + moveDir.z * Math.sin(angle)) * speed * dt;
+    const dz = (-moveDir.x * Math.sin(angle) + moveDir.z * Math.cos(angle)) * speed * dt;
+    let nx = player.position.x + dx, nz = player.position.z + dz;
+
+    if (obstacles) {
+      for (const ob of obstacles) {
+        const ddx = nx - ob.x, ddz = nz - ob.z;
+        const d = Math.hypot(ddx, ddz);
+        const minD = ob.r + 0.5;
+        if (d < minD && d > 0.0001) {
+          nx = ob.x + (ddx / d) * minD;
+          nz = ob.z + (ddz / d) * minD;
+        }
+      }
+    }
+
+    nx = Math.max(-28, Math.min(28, nx));
+    nz = Math.max(-28, Math.min(28, nz));
+    player.position.x = nx;
+    player.position.z = nz;
+  }
+
+  // Slide trail particles
+  if (state.abilities.sliding && now - lastSlideTrailTime > SLIDE_TRAIL_INTERVAL) {
+    spawnSlideTrail();
+    lastSlideTrailTime = now;
+  }
+
+  // Jumping & Gravity
+  if (keys['Space'] && onGround) {
+    verticalVelocity = JUMP_SPEED;
+    onGround = false;
+  }
+  verticalVelocity += GRAVITY * dt;
+  player.position.y += verticalVelocity * dt;
+  if (player.position.y <= 0) {
+    player.position.y = 0;
+    verticalVelocity = 0;
+    onGround = true;
+  }
+
+  // Calculate velocity for network dead-reckoning
+  if (dt > 0.0001) {
+    player.velocity.set(
+      (player.position.x - prevX) / dt,
+      (player.position.y - prevY) / dt,
+      (player.position.z - prevZ) / dt
+    );
+  }
+
+  if (character) {
+    character.group.position.copy(player.position);
+    character.group.rotation.y = player.yaw;
+    character.group.scale.y = state.abilities.sliding ? 0.78 : 1;
+
+    const pt = (now - punchAnimStart) / 220;
+    if (pt >= 0 && pt <= 1) character.armR.rotation.x = -Math.sin(pt * Math.PI) * 1.4;
+    else character.armR.rotation.x = 0;
+
+    const tt = (now - tailAnimStart) / 300;
+    if (tt >= 0 && tt <= 1) character.tailFin.rotation.z = Math.sin(tt * Math.PI * 2) * 0.9;
+    else character.tailFin.rotation.z = 0;
+  }
+}
+
+// ---------- Abilities ----------
+function toggleSlide() {
+  const now = performance.now();
+  if (!state.abilities.sliding) {
+    if (now < state.abilities.slideCooldownUntil) {
+      playEmptySound();
+      return;
+    }
+    // Activate 5-second 2X speed slide
+    state.abilities.sliding = true;
+    state.abilities.slideEndTime = now + SLIDE_DURATION;
+    playSlideStartSound();
+  } else {
+    // Manual cancel
+    state.abilities.sliding = false;
+    state.abilities.slideCooldownUntil = now + SLIDE_COOLDOWN;
+    playSlideStopSound();
+  }
+}
+
+function usePunch() {
+  if (state.abilities.punchCharges <= 0) {
+    playEmptySound();
+    return;
+  }
+  const wasFull = state.abilities.punchCharges === PUNCH_MAX;
+  state.abilities.punchCharges--;
+  if (wasFull) state.abilities.punchChargeTimer = PUNCH_RECHARGE;
+
+  meleeHit(PUNCH_RANGE, PUNCH_HALFANGLE, PUNCH_DMG_MIN, PUNCH_DMG_MAX, PUNCH_KNOCK, 'punch');
+  playPunchSound();
+  punchAnimStart = performance.now();
+
+  if (state.mode === 'online') {
+    net.send({ type: 'action', id: localId, action: 'punch' });
+  }
+}
+
+function useTailWhack() {
+  const now = performance.now();
+  if (now < state.abilities.tailwhackCooldownUntil) return;
+  state.abilities.tailwhackCooldownUntil = now + TAILWHACK_COOLDOWN;
+
+  meleeHit(TAILWHACK_RANGE, TAILWHACK_HALFANGLE, TAILWHACK_DMG_MIN, TAILWHACK_DMG_MAX, TAILWHACK_KNOCK, 'tailwhack');
+  playTailWhackSound();
+  tailAnimStart = now;
+
+  if (state.mode === 'online') {
+    net.send({ type: 'action', id: localId, action: 'tailwhack' });
+  }
+}
+
+function useIcicle(bots, remotePlayers) {
+  const now = performance.now();
+  if (now < state.abilities.icicleCooldownUntil) return;
+
+  let nearest = null, nearestDist = Infinity, nearestKind = null, nearestId = null;
+  if (bots) {
+    for (const b of bots) {
+      if (!b.alive) continue;
+      const dx = b.group.position.x - player.position.x, dz = b.group.position.z - player.position.z;
+      const d = Math.hypot(dx, dz);
+      if (d < ICICLE_RANGE && d < nearestDist) {
+        nearestDist = d;
+        nearest = b;
+        nearestKind = 'bot';
+      }
+    }
+  }
+
+  if (state.mode === 'online' && remotePlayers) {
+    for (const [id, rp] of remotePlayers) {
+      if (!rp.data || rp.data.alive === false) continue;
+      const dx = rp.displayPos.x - player.position.x, dz = rp.displayPos.z - player.position.z;
+      const d = Math.hypot(dx, dz);
+      if (d < ICICLE_RANGE && d < nearestDist) {
+        nearestDist = d;
+        nearest = rp;
+        nearestKind = 'remote';
+        nearestId = id;
+      }
+    }
+  }
+
+  if (!nearest) {
+    playEmptySound();
+    return;
+  }
+
+  state.abilities.icicleCooldownUntil = now + ICICLE_COOLDOWN;
+  playIcicleSound();
+
+  const targetPos = (nearestKind === 'bot' ? nearest.group.position : nearest.displayPos).clone();
+  if (state.mode === 'online') {
+    net.send({ type: 'action', id: localId, action: 'icicle', targetX: targetPos.x, targetZ: targetPos.z });
+  }
+
+  setTimeout(() => {
+    spawnIcicleSpike(targetPos);
+    if (nearestKind === 'bot' && nearest.alive) {
+      const dmg = Math.round(ICICLE_DMG_MIN + Math.random() * (ICICLE_DMG_MAX - ICICLE_DMG_MIN));
+      nearest.takeDamage(dmg, targetPos.clone().add(new THREE.Vector3(0, 1, 0)), 0xcdf3ff);
+      spawnDamageNumber(targetPos, dmg, true);
+      flashHitMarker();
+    } else if (nearestKind === 'remote' && remotePlayers.has(nearestId) && nearest.data.alive !== false) {
+      const dmg = Math.round(ICICLE_DMG_MIN + Math.random() * (ICICLE_DMG_MAX - ICICLE_DMG_MIN));
+      spawnHitSpark(targetPos.clone().add(new THREE.Vector3(0, 1, 0)), 0xcdf3ff);
+      spawnDamageNumber(targetPos, dmg, true);
+      sendHitEvent(nearestId, dmg, 'icicle');
+      flashHitMarker();
+    }
+  }, ICICLE_TELEGRAPH);
+}
+
+function forwardVector() {
+  return new THREE.Vector3(-Math.sin(player.yaw), 0, -Math.cos(player.yaw));
+}
+
+// ---------- Dr. Andrew - Lightning Kit ----------
+const lightningWaves = []; // active Q wave rings
+
+// Returns every currently valid attackable target as a flat list:
+// { kind: 'bot'|'remote', ref, id, uidKey, pos }
+function getTargetsList() {
+  const list = [];
+  if (typeof bots !== 'undefined') {
+    for (const b of bots) {
+      if (!b.alive) continue;
+      list.push({ kind: 'bot', ref: b, id: null, uidKey: b.uid, pos: b.group.position });
+    }
+  }
+  if (state.mode === 'online' && typeof remotePlayers !== 'undefined') {
+    for (const [id, rp] of remotePlayers) {
+      if (!rp.data || rp.data.alive === false) continue;
+      list.push({ kind: 'remote', ref: rp, id, uidKey: 'remote_' + id, pos: rp.displayPos });
+    }
+  }
+  return list;
+}
+
+function dealDamageToTarget(t, dmg, hitPoint, sparkColor, hitType, isCrit) {
+  if (t.kind === 'bot') {
+    if (!t.ref.alive) return;
+    t.ref.takeDamage(dmg, hitPoint, sparkColor);
+    spawnDamageNumber(hitPoint, dmg, !!isCrit);
+  } else {
+    spawnHitSpark(hitPoint, sparkColor);
+    spawnDamageNumber(hitPoint, dmg, !!isCrit);
+    sendHitEvent(t.id, dmg, hitType);
+  }
+}
+
+function rootTarget(t, durationMs) {
+  if (t.kind === 'bot') {
+    t.ref.rootedUntil = performance.now() + durationMs;
+  } else if (state.mode === 'online') {
+    net.send({ type: 'status', effect: 'root', targetId: t.id, duration: durationMs });
+  }
+}
+
+// ---- Normal Attack: Lightning Beam (hold LMB) ----
+function startAndrewBeam() {
+  if (state.andrew.beamCharge <= 0) { playEmptySound(); return; }
+  state.andrew.beaming = true;
+}
+
+function stopAndrewBeam() {
+  if (!state.andrew.beaming) return;
+  state.andrew.beaming = false;
+  state.andrew.lastBeamStopTime = performance.now();
+  hideLightningBeamVisual();
+}
+
+let beamVisualLine = null;
+function ensureBeamVisual() {
+  if (beamVisualLine) return beamVisualLine;
+  const geo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+  const mat = new THREE.LineBasicMaterial({ color: 0x8fefff, transparent: true, opacity: 0.9 });
+  beamVisualLine = new THREE.Line(geo, mat);
+  beamVisualLine.visible = false;
+  if (typeof scene !== 'undefined') scene.add(beamVisualLine);
+  return beamVisualLine;
+}
+
+function showLightningBeamVisual(start, end) {
+  const line = ensureBeamVisual();
+  line.geometry.setFromPoints([start, end]);
+  line.visible = true;
+}
+
+function hideLightningBeamVisual() {
+  if (beamVisualLine) beamVisualLine.visible = false;
+}
+
+// Bounces beam damage from target to target within BEAM_CHAIN_RADIUS, up to
+// BEAM_CHAIN_MAX_TARGETS total, each bounce dealing falloff-reduced damage.
+function applyChainLightning(originPos, firstTarget) {
+  const hitKeys = new Set();
+  let current = firstTarget;
+  let fromPos = originPos;
+  let dmg = BEAM_TICK_DMG;
+  let hitCount = 0;
+
+  while (current && hitKeys.size < BEAM_CHAIN_MAX_TARGETS) {
+    hitKeys.add(current.uidKey);
+    const targetPos = current.pos.clone().add(new THREE.Vector3(0, 1, 0));
+    dealDamageToTarget(current, Math.round(dmg), targetPos, 0x8fefff, 'lightning_beam', dmg >= BEAM_TICK_DMG);
+    showLightningBeamVisual(fromPos, targetPos);
+    spawnHitSpark(targetPos, 0x8fefff, 5);
+    hitCount++;
+
+    // Find the next closest un-hit target within bounce radius of this one
+    let next = null, nextDist = BEAM_CHAIN_RADIUS;
+    for (const t of getTargetsList()) {
+      if (hitKeys.has(t.uidKey)) continue;
+      const d = t.pos.distanceTo(current.pos);
+      if (d < nextDist) { nextDist = d; next = t; }
+    }
+
+    fromPos = targetPos;
+    dmg *= BEAM_CHAIN_FALLOFF;
+    current = next;
+  }
+
+  if (hitCount > 0) { flashHitMarker(); playHitSound(); }
+}
+
+function updateAndrewBeam(now, dt) {
+  const a = state.andrew;
+  if (!a.beaming) {
+    if (now - a.lastBeamStopTime > BEAM_RECHARGE_DELAY && a.beamCharge < BEAM_MAX_CHARGE) {
+      a.beamCharge = Math.min(BEAM_MAX_CHARGE, a.beamCharge + BEAM_RECHARGE_PER_SEC * dt);
+    }
+    return;
+  }
+
+  a.beamCharge -= BEAM_DRAIN_PER_SEC * dt;
+  if (a.beamCharge <= 0) {
+    a.beamCharge = 0;
+    stopAndrewBeam();
+    return;
+  }
+
+  const forward = forwardVector();
+  const halfAngleCos = Math.cos(BEAM_HALFANGLE);
+  const origin = player.position.clone().add(new THREE.Vector3(0, 1.4, 0));
+
+  let nearest = null, nearestDist = BEAM_RANGE;
+  for (const t of getTargetsList()) {
+    const to = new THREE.Vector3(t.pos.x - player.position.x, 0, t.pos.z - player.position.z);
+    const dist = to.length();
+    if (dist > BEAM_RANGE || dist < 0.0001) continue;
+    const dir = to.clone().normalize();
+    if (forward.dot(dir) >= halfAngleCos && dist < nearestDist) {
+      nearestDist = dist;
+      nearest = t;
+    }
+  }
+
+  if (nearest) {
+    const endPos = nearest.pos.clone().add(new THREE.Vector3(0, 1, 0));
+    showLightningBeamVisual(origin, endPos);
+  } else {
+    showLightningBeamVisual(origin, origin.clone().add(forward.clone().multiplyScalar(BEAM_RANGE)));
+  }
+
+  if (now - a.lastBeamTick > BEAM_TICK_INTERVAL) {
+    a.lastBeamTick = now;
+    if (nearest) applyChainLightning(origin, nearest);
+  }
+}
+
+// ---- E: Skyfall Zap ----
+function useAndrewZap() {
+  const now = performance.now();
+  if (now < state.andrew.zapCooldownUntil) return;
+
+  let nearest = null, nearestDist = ZAP_RANGE;
+  for (const t of getTargetsList()) {
+    const d = new THREE.Vector3(t.pos.x - player.position.x, 0, t.pos.z - player.position.z).length();
+    if (d < nearestDist) { nearestDist = d; nearest = t; }
+  }
+
+  if (!nearest) { playEmptySound(); return; }
+
+  state.andrew.zapCooldownUntil = now + ZAP_COOLDOWN;
+  playIcicleSound();
+
+  const targetPos = nearest.pos.clone();
+  if (state.mode === 'online') {
+    net.send({ type: 'action', id: localId, action: 'andrew_zap', targetX: targetPos.x, targetZ: targetPos.z });
+  }
+
+  setTimeout(() => {
+    const skyPoint = targetPos.clone().add(new THREE.Vector3(0, 14, 0));
+    spawnTracer(skyPoint, targetPos.clone().add(new THREE.Vector3(0, 0.1, 0)), 0xbfefff);
+    spawnHitSpark(targetPos.clone().add(new THREE.Vector3(0, 0.5, 0)), 0xbfefff, 12);
+
+    const stillValid = nearest.kind === 'bot' ? nearest.ref.alive : (state.mode === 'online' && remotePlayers.has(nearest.id) && nearest.ref.data.alive !== false);
+    if (stillValid) {
+      const dmg = Math.round(ZAP_DMG_MIN + Math.random() * (ZAP_DMG_MAX - ZAP_DMG_MIN));
+      const hitPoint = targetPos.clone().add(new THREE.Vector3(0, 1, 0));
+      dealDamageToTarget(nearest, dmg, hitPoint, 0xbfefff, 'andrew_zap', true);
+      rootTarget(nearest, ZAP_ROOT_DURATION);
+      flashHitMarker();
+      playHitSound();
+    }
+  }, ZAP_TELEGRAPH);
+}
+
+// ---- R: Fire Aura ----
+function useAndrewFireAura() {
+  const now = performance.now();
+  const a = state.andrew;
+  if (a.fireAuraActive || now < a.fireAuraCooldownUntil) return;
+
+  a.fireAuraActive = true;
+  a.fireAuraStartedAt = now;
+  a.fireAuraDamageDealt.clear();
+  playSnowballThrowSound(1);
+}
+
+function updateAndrewFireAura(now, dt) {
+  const a = state.andrew;
+  if (!a.fireAuraActive) return;
+
+  if (!a.lastAuraTick) a.lastAuraTick = now;
+  if (now - a.lastAuraTick >= FIREAURA_TICK_MS) {
+    a.lastAuraTick = now;
+    let anyoneStillBurning = false;
+
+    for (const t of getTargetsList()) {
+      const dist = t.pos.distanceTo(player.position);
+      if (dist > FIREAURA_RADIUS) continue;
+
+      const dealtSoFar = a.fireAuraDamageDealt.get(t.uidKey) || 0;
+      if (dealtSoFar >= FIREAURA_DMG_CAP) continue;
+
+      const tick = Math.min(FIREAURA_TICK_DMG, FIREAURA_DMG_CAP - dealtSoFar);
+      a.fireAuraDamageDealt.set(t.uidKey, dealtSoFar + tick);
+      anyoneStillBurning = true;
+
+      const hitPoint = t.pos.clone().add(new THREE.Vector3(0, 1, 0));
+      dealDamageToTarget(t, Math.round(tick), hitPoint, 0xff9a4a, 'andrew_fireaura', false);
+    }
+
+    spawnHitSpark(player.position.clone().add(new THREE.Vector3(0, 0.4, 0)), 0xff8c3a, 3);
+  }
+
+  // Aura ends once every currently-burning target has hit the cap, or after a
+  // generous max duration as a safety net so it never runs forever with no targets.
+  const maxDuration = (FIREAURA_DMG_CAP / FIREAURA_TICK_DMG) * FIREAURA_TICK_MS + 1500;
+  if (now - a.fireAuraStartedAt > maxDuration) {
+    a.fireAuraActive = false;
+    a.fireAuraCooldownUntil = now + FIREAURA_COOLDOWN;
+  }
+}
+
+function spawnRemoteWaveVisual(center) {
+  const geo = new THREE.RingGeometry(0.4, 0.4 + WAVE_THICKNESS, 48);
+  const mat = new THREE.MeshBasicMaterial({ color: 0xaef2ff, transparent: true, opacity: 0.75, side: THREE.DoubleSide });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.position.copy(center).setY(0.15);
+  if (typeof scene !== 'undefined') scene.add(mesh);
+
+  const startedAt = performance.now();
+  function grow() {
+    const now = performance.now();
+    const radius = 0.4 + WAVE_GROW_SPEED * ((now - startedAt) / 1000);
+    mesh.geometry.dispose();
+    mesh.geometry = new THREE.RingGeometry(Math.max(0.1, radius - WAVE_THICKNESS), radius, 48);
+    mesh.material.opacity = Math.max(0, 0.75 - radius / WAVE_MAX_RADIUS * 0.6);
+    if (radius < WAVE_MAX_RADIUS && now - startedAt < WAVE_MAX_LIFETIME) {
+      requestAnimationFrame(grow);
+    } else {
+      scene.remove(mesh);
+      mesh.geometry.dispose();
+      mesh.material.dispose();
+    }
+  }
+  requestAnimationFrame(grow);
+}
+
+// ---- Q: Lightning Wave (slow, instant kill) ----
+function useAndrewWave() {
+  const now = performance.now();
+  if (now < state.andrew.waveCooldownUntil) return;
+  state.andrew.waveCooldownUntil = now + WAVE_COOLDOWN;
+
+  const geo = new THREE.RingGeometry(0.4, 0.4 + WAVE_THICKNESS, 48);
+  const mat = new THREE.MeshBasicMaterial({ color: 0xaef2ff, transparent: true, opacity: 0.75, side: THREE.DoubleSide });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.position.copy(player.position).setY(0.15);
+  if (typeof scene !== 'undefined') scene.add(mesh);
+
+  lightningWaves.push({
+    mesh,
+    center: player.position.clone(),
+    radius: 0.4,
+    createdAt: now,
+    hitKeys: new Set()
+  });
+
+  playSnowballThrowSound(1);
+  if (state.mode === 'online') {
+    net.send({ type: 'action', id: localId, action: 'andrew_wave', x: player.position.x, z: player.position.z });
+  }
+}
+
+function updateLightningWaves(now, dt) {
+  for (let i = lightningWaves.length - 1; i >= 0; i--) {
+    const w = lightningWaves[i];
+    w.radius += WAVE_GROW_SPEED * dt;
+
+    w.mesh.geometry.dispose();
+    w.mesh.geometry = new THREE.RingGeometry(Math.max(0.1, w.radius - WAVE_THICKNESS), w.radius, 48);
+    w.mesh.material.opacity = Math.max(0.15, 0.75 - w.radius / WAVE_MAX_RADIUS * 0.6);
+
+    for (const t of getTargetsList()) {
+      if (w.hitKeys.has(t.uidKey)) continue;
+      const dist = t.pos.distanceTo(w.center);
+      if (Math.abs(dist - w.radius) <= WAVE_THICKNESS * 0.6) {
+        w.hitKeys.add(t.uidKey);
+        const hitPoint = t.pos.clone().add(new THREE.Vector3(0, 1, 0));
+        spawnHitSpark(hitPoint, 0xffffff, 14);
+        spawnDamageNumber(hitPoint, 9999, true);
+        if (t.kind === 'bot') {
+          t.ref.takeDamage(999999, hitPoint, 0xffffff);
+        } else {
+          sendHitEvent(t.id, 999999, 'andrew_wave');
+        }
+        flashHitMarker();
+        playHitSound();
+      }
+    }
+
+    if (w.radius >= WAVE_MAX_RADIUS || now - w.createdAt > WAVE_MAX_LIFETIME) {
+      if (typeof scene !== 'undefined') scene.remove(w.mesh);
+      w.mesh.geometry.dispose();
+      w.mesh.material.dispose();
+      lightningWaves.splice(i, 1);
+    }
+  }
+}
+
+// ---- RT / RMB: Fiery Punch ----
+function useAndrewFistPunch() {
+  const now = performance.now();
+  if (now < state.andrew.fistCooldownUntil) return;
+  state.andrew.fistCooldownUntil = now + FISTPUNCH_COOLDOWN;
+
+  meleeHit(FISTPUNCH_RANGE, FISTPUNCH_HALFANGLE, FISTPUNCH_DMG_MIN, FISTPUNCH_DMG_MAX, FISTPUNCH_KNOCK, 'andrew_fistpunch');
+  playPunchSound();
+  punchAnimStart = now;
+
+  if (state.mode === 'online') {
+    net.send({ type: 'action', id: localId, action: 'andrew_fistpunch' });
+  }
+}
+
+function meleeHit(range, halfAngle, dmgMin, dmgMax, knockback, hitType) {
+  const forward = forwardVector();
+  const halfAngleCos = Math.cos(halfAngle);
+  let hitAny = false;
+
+  // Hit bots
+  if (typeof bots !== 'undefined') {
+    for (const b of bots) {
+      if (!b.alive) continue;
+      const toBot = new THREE.Vector3(b.group.position.x - player.position.x, 0, b.group.position.z - player.position.z);
+      const dist = toBot.length();
+      if (dist > range || dist < 0.0001) continue;
+      const dirToBot = toBot.clone().normalize();
+      if (forward.dot(dirToBot) >= halfAngleCos) {
+        const dmg = Math.round(dmgMin + Math.random() * (dmgMax - dmgMin));
+        const targetPos = b.group.position.clone().add(new THREE.Vector3(0, 1, 0));
+        b.takeDamage(dmg, targetPos, 0x9fe8ff);
+        spawnDamageNumber(targetPos, dmg, false);
+        if (knockback > 0) {
+          b.group.position.x += dirToBot.x * knockback;
+          b.group.position.z += dirToBot.z * knockback;
+        }
+        hitAny = true;
+      }
+    }
+  }
+
+  // Hit remote players
+  if (state.mode === 'online' && typeof remotePlayers !== 'undefined') {
+    for (const [id, rp] of remotePlayers) {
+      if (!rp.data || rp.data.alive === false) continue;
+      const toRp = new THREE.Vector3(rp.displayPos.x - player.position.x, 0, rp.displayPos.z - player.position.z);
+      const dist = toRp.length();
+      if (dist > range || dist < 0.0001) continue;
+      const dirTo = toRp.clone().normalize();
+      if (forward.dot(dirTo) >= halfAngleCos) {
+        const dmg = Math.round(dmgMin + Math.random() * (dmgMax - dmgMin));
+        const targetPos = rp.displayPos.clone().add(new THREE.Vector3(0, 1, 0));
+        spawnHitSpark(targetPos, 0x9fe8ff);
+        spawnDamageNumber(targetPos, dmg, false);
+        sendHitEvent(id, dmg, hitType);
+        hitAny = true;
+      }
+    }
+  }
+
+  if (hitAny) {
+    flashHitMarker();
+    playHitSound();
+  }
+  return hitAny;
+}
+
+function damagePlayer(dmg, attackerName, attackerId) {
+  if (state.over || state.dead) return;
+  state.health = Math.max(0, state.health - dmg);
+  state.lastDamageTime = performance.now();
+
+  updateHealthBar();
+  flashDamage();
+  playHurtSound();
+
+  // Floating damage number above local player head
+  spawnDamageNumber(player.position.clone().add(new THREE.Vector3(0, 1.2, 0)), dmg, dmg >= 40);
+
+  // Broadcast updated health state immediately so other players see health decrease instantly
+  if (state.mode === 'online') {
+    pushLocalState(performance.now());
+  }
+
+  if (state.health <= 0) {
+    if (state.mode === 'online') dieOnline(attackerName, attackerId);
+    else endGame();
+  }
+}
+
+function dieOnline(attackerName, attackerId) {
+  if (state.dead) return;
+  state.dead = true;
+  state.deaths++;
+  state.abilities.sliding = false;
+  snowballManager.charging = false;
+  state.andrew.beaming = false;
+  hideLightningBeamVisual();
+  state.andrew.fireAuraActive = false;
+
+  updateScoreText();
+  playDeathSound();
+
+  document.getElementById('respawnBy').textContent = attackerName ? ('Eliminated by ' + attackerName) : 'Eliminated';
+  showKillFeedMessage(attackerName ? (attackerName + ' eliminated you') : 'You were eliminated');
+
+  if (attackerId) {
+    net.send({
+      type: 'kill',
+      killerId: attackerId,
+      victimId: localId,
+      victimName: localName
+    });
+  }
+
+  pushLocalState(performance.now());
+
+  document.getElementById('respawnScreen').style.display = 'flex';
+  const countEl = document.getElementById('respawnCount');
+  let remaining = Math.ceil(RESPAWN_TIME / 1000);
+  countEl.textContent = remaining;
+
+  const tick = setInterval(() => {
+    remaining--;
+    if (remaining > 0) countEl.textContent = remaining;
+  }, 1000);
+
+  setTimeout(() => {
+    clearInterval(tick);
+    document.getElementById('respawnScreen').style.display = 'none';
+    const p = randomArenaPoint();
+    player.position.set(p.x, 0, p.z);
+    player.velocity.set(0, 0, 0);
+    verticalVelocity = 0;
+    onGround = true;
+    state.dead = false;
+    state.health = state.maxHealth;
+    state.lastDamageTime = performance.now();
+    updateHealthBar();
+    pushLocalState(performance.now());
+  }, RESPAWN_TIME);
+}
+
+function randomArenaPoint() {
+  for (let tries = 0; tries < 12; tries++) {
+    const x = (Math.random() * 2 - 1) * 26;
+    const z = (Math.random() * 2 - 1) * 26;
+    let ok = true;
+    if (typeof obstacles !== 'undefined') {
+      for (const ob of obstacles) {
+        if (Math.hypot(x - ob.x, z - ob.z) < ob.r + 1.2) {
+          ok = false;
+          break;
+        }
+      }
+    }
+    if (ok) return { x, z };
+  }
+  return { x: 0, z: 0 };
+}
+
+</script>
+<script>
+// js/net.js - Real-time WebSocket + BroadcastChannel netcode, dead-reckoning & sync
+
+const PLAYER_TIMEOUT = 12000; // 12 seconds before timeout (prevents premature disconnects)
+const REMOTE_TINTS = [0xd45fb0, 0x6fd45f, 0xf0a83c, 0x9a6ff0, 0xf05c5c, 0x5fd4c8];
+const remotePlayers = new Map(); // id -> remote player object
+
+let lastSyncPush = -99999;
+
+function hashStringToIndex(str, mod) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = (h * 31 + str.charCodeAt(i)) >>> 0;
+  }
+  return h % mod;
+}
+
+function makeNameSprite(text) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+  ctx.font = 'bold 32px Segoe UI, Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+  ctx.fillStyle = '#ffffff';
+  ctx.strokeText(text, 128, 34);
+  ctx.fillText(text, 128, 34);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(1.6, 0.4, 1);
+  sprite.renderOrder = 1000;
+  return sprite;
+}
+
+function buildRemotePlayerVisual(id, name) {
+  const tint = REMOTE_TINTS[hashStringToIndex(id, REMOTE_TINTS.length)];
+  const ch = buildCharacter(tint);
+  ch.bodyMesh.userData.remoteId = id;
+
+  const hpBg = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0x220000, depthTest: false }));
+  hpBg.scale.set(1, 0.14, 1);
+  hpBg.position.y = 2.05;
+  hpBg.renderOrder = 998;
+
+  const hpFg = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0x33ff55, depthTest: false }));
+  hpFg.scale.set(1, 0.14, 1);
+  hpFg.position.y = 2.05;
+  hpFg.renderOrder = 999;
+  ch.group.add(hpBg);
+  ch.group.add(hpFg);
+
+  const nameSprite = makeNameSprite(name || 'Hyperswag');
+  nameSprite.position.y = 2.35;
+  ch.group.add(nameSprite);
+
+  return {
+    group: ch.group,
+    armR: ch.armR,
+    tailFin: ch.tailFin,
+    hitMesh: ch.bodyMesh,
+    hpBg,
+    hpFg,
+    nameSprite,
+    lastName: name || 'Hyperswag',
+    displayPos: new THREE.Vector3(0, 0, 0),
+    targetPos: new THREE.Vector3(0, 0, 0),
+    prevPos: new THREE.Vector3(0, 0, 0),
+    velocity: new THREE.Vector3(0, 0, 0),
+    displayYaw: 0,
+    targetYaw: 0,
+    data: null,
+    lastSeen: performance.now(),
+    lastPacketTime: performance.now(),
+    punchAnimStart: -9999,
+    tailAnimStart: -9999,
+    lastPunchFlag: false,
+    lastTailFlag: false
+  };
+}
+
+function upsertRemotePlayer(id, data, now) {
+  let rp = remotePlayers.get(id);
+  if (!rp) {
+    rp = buildRemotePlayerVisual(id, data.name);
+    rp.displayPos.set(data.x || 0, data.y || 0, data.z || 0);
+    rp.targetPos.copy(rp.displayPos);
+    rp.prevPos.copy(rp.displayPos);
+    if (data.vx !== undefined) rp.velocity.set(data.vx, data.vy || 0, data.vz);
+    rp.displayYaw = data.yaw || 0;
+    rp.targetYaw = data.yaw || 0;
+    rp.group.position.copy(rp.displayPos);
+    rp.group.rotation.y = rp.displayYaw;
+    remotePlayers.set(id, rp);
+    updateOnlineStatus();
+  } else {
+    rp.prevPos.copy(rp.targetPos);
+    rp.targetPos.set(data.x || 0, data.y || 0, data.z || 0);
+    if (data.vx !== undefined && data.vz !== undefined) {
+      rp.velocity.set(data.vx, data.vy || 0, data.vz);
+    } else {
+      const dtP = Math.max(0.016, (now - rp.lastPacketTime) / 1000);
+      rp.velocity.set(
+        (rp.targetPos.x - rp.prevPos.x) / dtP,
+        (rp.targetPos.y - rp.prevPos.y) / dtP,
+        (rp.targetPos.z - rp.prevPos.z) / dtP
+      );
+    }
+    rp.targetYaw = data.yaw || 0;
+    rp.lastPacketTime = now;
+  }
+
+  if (data.name && data.name !== rp.lastName) {
+    rp.lastName = data.name;
+    const oldSprite = rp.nameSprite;
+    rp.nameSprite = makeNameSprite(data.name);
+    rp.nameSprite.position.y = 2.35;
+    rp.group.remove(oldSprite);
+    if (oldSprite.material.map) oldSprite.material.map.dispose();
+    oldSprite.material.dispose();
+    rp.group.add(rp.nameSprite);
+  }
+
+  if (data.punching && !rp.lastPunchFlag) {
+    rp.punchAnimStart = now;
+    playPunchSound();
+  }
+  if (data.tailSlamming && !rp.lastTailFlag) {
+    rp.tailAnimStart = now;
+    playTailWhackSound();
+  }
+
+  rp.lastPunchFlag = !!data.punching;
+  rp.lastTailFlag = !!data.tailSlamming;
+  rp.data = data;
+  rp.lastSeen = now;
+}
+
+function removeRemotePlayer(id) {
+  const rp = remotePlayers.get(id);
+  if (!rp) return;
+  rp.group.traverse((obj) => {
+    if (obj.geometry) obj.geometry.dispose();
+    if (obj.material) {
+      if (obj.material.map) obj.material.map.dispose();
+      obj.material.dispose();
+    }
+  });
+  if (typeof scene !== 'undefined') scene.remove(rp.group);
+  remotePlayers.delete(id);
+  updateOnlineStatus();
+}
+
+function updateRemotePlayersVisual(dt, now) {
+  for (const [id, rp] of remotePlayers) {
+    if (now - rp.lastSeen > PLAYER_TIMEOUT) {
+      removeRemotePlayer(id);
+      continue;
+    }
+    const d = rp.data;
+    if (!d) continue;
+
+    // Time-delta dead-reckoning extrapolation
+    const timeSincePacket = Math.max(0, (now - (rp.lastPacketTime || now)) / 1000);
+    const extrapolateTime = Math.min(timeSincePacket, 0.12);
+    const predictedPos = rp.targetPos.clone();
+    if (rp.velocity.lengthSq() > 0.001) {
+      predictedPos.x += rp.velocity.x * extrapolateTime;
+      predictedPos.z += rp.velocity.z * extrapolateTime;
+      predictedPos.x = Math.max(-28, Math.min(28, predictedPos.x));
+      predictedPos.z = Math.max(-28, Math.min(28, predictedPos.z));
+    }
+    predictedPos.y = rp.targetPos.y;
+
+    // Large coordinate change (respawn) snaps immediately
+    const distSq = rp.displayPos.distanceToSquared(predictedPos);
+    if (distSq > 36) {
+      rp.displayPos.copy(predictedPos);
+    } else {
+      const lerpAmt = 1.0 - Math.exp(-22 * dt);
+      rp.displayPos.lerp(predictedPos, lerpAmt);
+    }
+
+    // Angle wrapping & smooth yaw rotation
+    let diff = rp.targetYaw - rp.displayYaw;
+    while (diff > Math.PI) diff -= Math.PI * 2;
+    while (diff < -Math.PI) diff += Math.PI * 2;
+    const yawLerp = 1.0 - Math.exp(-20 * dt);
+    rp.displayYaw += diff * yawLerp;
+
+    rp.group.position.copy(rp.displayPos);
+    rp.group.rotation.y = rp.displayYaw;
+    rp.group.scale.y = d.sliding ? 0.78 : 1;
+    rp.group.visible = d.alive !== false;
+
+    // Real-time Health bar calculation & color
+    const frac = Math.max(0, Math.min(1, (d.health || 0) / (d.maxHealth || 100)));
+    rp.hpFg.scale.x = Math.max(0.001, frac);
+    rp.hpFg.material.color.setHex(frac > 0.5 ? 0x33ff55 : frac > 0.25 ? 0xffcc33 : 0xff3333);
+
+    // Punch & tail slam visual animations
+    const pt = (now - rp.punchAnimStart) / 220;
+    rp.armR.rotation.x = pt >= 0 && pt <= 1 ? -Math.sin(pt * Math.PI) * 1.4 : 0;
+    const tt = (now - rp.tailAnimStart) / 300;
+    rp.tailFin.rotation.z = tt >= 0 && tt <= 1 ? Math.sin(tt * Math.PI * 2) * 0.9 : 0;
+  }
+}
+
+// ---------- Network Manager (WebSocket + BroadcastChannel) ----------
+const net = {
+  socket: null,
+  bc: null,
+  transport: 'none',
+  ping: 0,
+  lastPingSent: 0,
+  connected: false,
+  initialized: false,
+  heartbeatInterval: null,
+
+  init() {
+    if (this.initialized) return;
+    this.initialized = true;
+
+    const isHttp = location.protocol.startsWith('http');
+    const wsProto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsHost = isHttp ? location.host : 'localhost:3000';
+    const wsUrl = `${wsProto}//${wsHost}`;
+
+    try {
+      this.socket = new WebSocket(wsUrl);
+      this.socket.onopen = () => {
+        this.connected = true;
+        this.transport = 'ws';
+        this.updateBadge('🟢 Connected to Local Server (WebSocket)', '#4dff88');
+        this.send({ type: 'join', id: localId, name: localName });
+        this.startPingLoop();
+        this.startBackgroundHeartbeat();
+        updateOnlineStatus();
+      };
+      this.socket.onmessage = (e) => {
+        try {
+          const msg = JSON.parse(e.data);
+          this.handleMessage(msg);
+        } catch (err) {}
+      };
+      this.socket.onclose = () => {
+        if (this.transport === 'ws') {
+          this.connected = false;
+          this.transport = 'none';
+          this.setupBroadcastFallback();
+        }
+      };
+      this.socket.onerror = () => {
+        if (this.transport !== 'ws') {
+          this.setupBroadcastFallback();
+        }
+      };
+    } catch (e) {
+      this.setupBroadcastFallback();
+    }
+
+    // Handle tab visibility / alt-tab: instantly request fresh state
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && state.mode === 'online') {
+        pushLocalState(performance.now());
+      }
+    });
+  },
+
+  setupBroadcastFallback() {
+    if (this.bc) return;
+    try {
+      if (typeof BroadcastChannel !== 'undefined') {
+        this.bc = new BroadcastChannel('hyperswag_arena_local');
+        this.transport = 'bc';
+        this.connected = true;
+        this.updateBadge('🟡 Multi-Tab Mode (BroadcastChannel)', '#ffcc33');
+        this.bc.onmessage = (e) => {
+          if (e.data) this.handleMessage(e.data);
+        };
+        this.send({ type: 'player_join', id: localId, name: localName });
+        this.startBackgroundHeartbeat();
+        updateOnlineStatus();
+      } else {
+        this.updateBadge('🔴 Offline', '#ff4444');
+      }
+    } catch (e) {
+      this.updateBadge('🔴 Offline', '#ff4444');
+    }
+  },
+
+  updateBadge(text, color) {
+    const badge = document.getElementById('connectionBadge');
+    const dot = document.getElementById('connDot');
+    const txt = document.getElementById('connStatusText');
+    if (badge && dot && txt) {
+      badge.style.display = 'inline-flex';
+      dot.style.background = color;
+      dot.style.boxShadow = `0 0 8px ${color}`;
+      txt.textContent = text;
+    }
+  },
+
+  startPingLoop() {
+    setInterval(() => {
+      if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+        this.lastPingSent = performance.now();
+        this.socket.send(JSON.stringify({ type: 'ping', time: this.lastPingSent }));
+      }
+    }, 2000);
+  },
+
+  startBackgroundHeartbeat() {
+    // Secondary interval that continues running even if requestAnimationFrame throttles in background tabs
+    if (this.heartbeatInterval) clearInterval(this.heartbeatInterval);
+    this.heartbeatInterval = setInterval(() => {
+      if (state.mode === 'online' && state.active && !state.over) {
+        pushLocalState(performance.now());
+      }
+    }, 150);
+  },
+
+  send(msg) {
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify(msg));
+    } else if (this.bc) {
+      this.bc.postMessage(msg);
+    }
+  },
+
+  handleMessage(msg) {
+    if (!msg || !msg.type) return;
+    const now = performance.now();
+
+    if (msg.type === 'pong') {
+      if (msg.clientTime) this.ping = Math.round(performance.now() - msg.clientTime);
+      updateOnlineStatus();
+      return;
+    }
+
+    if (msg.type === 'player_join') {
+      if (msg.id && msg.id !== localId) {
+        showKillFeedMessage(`${msg.name || 'A player'} joined the arena`);
+        pushLocalState(now);
+      }
+      updateOnlineStatus();
+      return;
+    }
+
+    if (msg.type === 'player_leave') {
+      if (msg.id) {
+        const rp = remotePlayers.get(msg.id);
+        const name = (rp && rp.lastName) || msg.name || 'A player';
+        removeRemotePlayer(msg.id);
+        showKillFeedMessage(`${name} left the arena`);
+      }
+      updateOnlineStatus();
+      return;
+    }
+
+    if (msg.type === 'state') {
+      if (msg.id && msg.id !== localId) {
+        upsertRemotePlayer(msg.id, msg, now);
+      }
+      return;
+    }
+
+    if (msg.type === 'action') {
+      if (msg.id && msg.id !== localId) {
+        const rp = remotePlayers.get(msg.id);
+        if (rp) {
+          if (msg.action === 'punch' || msg.action === 'andrew_fistpunch') {
+            rp.punchAnimStart = now;
+            playPunchSound();
+          } else if (msg.action === 'tailwhack') {
+            rp.tailAnimStart = now;
+            playTailWhackSound();
+          } else if (msg.action === 'icicle' && msg.targetX !== undefined) {
+            spawnIcicleSpike(new THREE.Vector3(msg.targetX, 0, msg.targetZ));
+          } else if (msg.action === 'andrew_zap' && msg.targetX !== undefined) {
+            const targetPos = new THREE.Vector3(msg.targetX, 0, msg.targetZ);
+            setTimeout(() => {
+              const skyPoint = targetPos.clone().add(new THREE.Vector3(0, 14, 0));
+              spawnTracer(skyPoint, targetPos.clone().add(new THREE.Vector3(0, 0.1, 0)), 0xbfefff);
+              spawnHitSpark(targetPos.clone().add(new THREE.Vector3(0, 0.5, 0)), 0xbfefff, 12);
+            }, ZAP_TELEGRAPH);
+          } else if (msg.action === 'andrew_wave' && msg.x !== undefined) {
+            spawnRemoteWaveVisual(new THREE.Vector3(msg.x, 0, msg.z));
+          }
+        }
+      }
+      return;
+    }
+
+    if (msg.type === 'status') {
+      if (msg.effect === 'root' && msg.targetId === localId) {
+        state.rootedUntil = performance.now() + (msg.duration || 500);
+      }
+      return;
+    }
+
+    if (msg.type === 'snowball_throw') {
+      if (msg.id && msg.id !== localId) {
+        snowballManager.spawnRemoteSnowball(msg);
+        playSnowballThrowSound(msg.radius || 0.5);
+      }
+      return;
+    }
+
+    if (msg.type === 'hit') {
+      if (msg.targetId === localId && state.mode === 'online' && state.active && !state.paused && !state.dead) {
+        damagePlayer(msg.dmg, msg.attackerName, msg.attackerId);
+      }
+      return;
+    }
+
+    if (msg.type === 'kill') {
+      if (msg.killerId === localId) {
+        state.kills++;
+        state.score += 250;
+        updateScoreText();
+        showKillFeedMessage(`You eliminated ${msg.victimName || 'a player'}! (+250)`);
+      }
+      return;
+    }
+  }
+};
+
+function pushLocalState(now) {
+  const payload = {
+    type: 'state',
+    id: localId,
+    name: localName,
+    x: Math.round(player.position.x * 100) / 100,
+    y: Math.round(player.position.y * 100) / 100,
+    z: Math.round(player.position.z * 100) / 100,
+    vx: Math.round(player.velocity.x * 100) / 100,
+    vy: Math.round(player.velocity.y * 100) / 100,
+    vz: Math.round(player.velocity.z * 100) / 100,
+    yaw: Math.round(player.yaw * 1000) / 1000,
+    pitch: Math.round(player.pitch * 1000) / 1000,
+    health: state.health,
+    maxHealth: state.maxHealth,
+    alive: !state.dead,
+    sliding: state.abilities.sliding,
+    punching: now - punchAnimStart < 220,
+    tailSlamming: now - tailAnimStart < 300,
+    ts: Date.now()
+  };
+  net.send(payload);
+}
+
+function sendHitEvent(targetId, dmg, type) {
+  net.send({
+    type: 'hit',
+    targetId: targetId,
+    dmg: Math.round(dmg * 10) / 10,
+    attackerId: localId,
+    attackerName: localName,
+    hitType: type || 'attack'
+  });
+}
+
+window.addEventListener('pagehide', () => {
+  if (state.mode === 'online') {
+    net.send({ type: 'player_leave', id: localId, name: localName });
+  }
+});
+
+</script>
+<script>
+// js/game.js - Three.js scene, camera, bots, input handling, HUD & main loop
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x06111d);
+scene.fog = new THREE.FogExp2(0x06111d, 0.016);
+
+const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 120);
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = false;
+document.body.appendChild(renderer.domElement);
+
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// ---------- Lighting ----------
+const hemi = new THREE.HemisphereLight(0xbbe8ff, 0x112233, 0.85);
+scene.add(hemi);
+
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+dirLight.position.set(25, 35, 15);
+scene.add(dirLight);
+
+// ---------- Arena & Ground ----------
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(70, 70),
+  new THREE.MeshStandardMaterial({ color: 0x1c384e, roughness: 0.25, metalness: 0.1 })
+);
+ground.rotation.x = -Math.PI / 2;
+scene.add(ground);
+
+const grid = new THREE.GridHelper(70, 35, 0x4da6ff, 0x183852);
+grid.position.y = 0.01;
+scene.add(grid);
+
+// Arena Boundary Ice Crystals
+for (let i = 0; i < 40; i++) {
+  const angle = (i / 40) * Math.PI * 2;
+  const rad = 29.5 + (Math.sin(i * 3) * 0.5);
+  const h = 2.5 + Math.sin(i * 5) * 1.5;
+  const pillar = new THREE.Mesh(
+    new THREE.ConeGeometry(0.8, h, 5),
+    new THREE.MeshStandardMaterial({ color: 0x5cc5ff, roughness: 0.2, transparent: true, opacity: 0.85 })
+  );
+  pillar.position.set(Math.cos(angle) * rad, h / 2, Math.sin(angle) * rad);
+  pillar.rotation.y = angle;
+  scene.add(pillar);
+}
+
+// ---------- Obstacles ----------
+const obstacles = [];
+const obstacleMeshes = [];
+function addObstacle(x, z, size = 2.4, height = 2.4) {
+  const geo = new THREE.BoxGeometry(size, height, size);
+  const mat = new THREE.MeshStandardMaterial({ color: 0x18344c, roughness: 0.4 });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.set(x, height / 2, z);
+  scene.add(mesh);
+  obstacleMeshes.push(mesh);
+  obstacles.push({ x, z, r: size * 0.65, height });
+}
+addObstacle(-11, -9, 2.4, 3.0);
+addObstacle(11, -9, 2.4, 3.0);
+addObstacle(-11, 11, 2.4, 3.0);
+addObstacle(11, 11, 2.4, 3.0);
+addObstacle(0, 0, 3.2, 2.6);
+addObstacle(-18, 0, 2.0, 2.2);
+addObstacle(18, 0, 2.0, 2.2);
+addObstacle(0, -18, 2.0, 2.2);
+addObstacle(0, 18, 2.0, 2.2);
+
+// ---------- Bot Class (for solo waves) ----------
+class Bot {
+  constructor(pos, wave) {
+    this.uid = 'bot_' + Math.random().toString(36).slice(2, 9);
+    this.wave = wave;
+    this.maxHealth = 70 + wave * 14;
+    this.health = this.maxHealth;
+    this.alive = true;
+    this.dying = false;
+    this.removed = false;
+    this.deathTimer = 0;
+    this.rootedUntil = 0;
+    this.speed = 2.6 + Math.min(wave * 0.12, 1.8);
+    this.shootRange = 22;
+    this.desiredDist = 9 + Math.random() * 4;
+    this.shotInterval = Math.max(600, 1500 - wave * 60);
+    this.lastShot = -9999;
+    this.strafeSeed = Math.random() * 100;
+
+    this.group = new THREE.Group();
+    this.group.position.set(pos.x, 0, pos.z);
+
+    this.body = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.1, 0.4), new THREE.MeshStandardMaterial({ color: 0xcc3333 }));
+    this.body.position.y = 1.0;
+    this.body.userData.bot = this;
+    this.group.add(this.body);
+
+    this.head = new THREE.Mesh(new THREE.SphereGeometry(0.26, 10, 10), new THREE.MeshStandardMaterial({ color: 0xdba27a }));
+    this.head.position.y = 1.75;
+    this.head.userData.bot = this;
+    this.group.add(this.head);
+
+    const hpBg = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0x220000, depthTest: false }));
+    hpBg.scale.set(0.9, 0.12, 1);
+    hpBg.position.y = 2.15;
+    this.group.add(hpBg);
+
+    this.hpFg = new THREE.Sprite(new THREE.SpriteMaterial({ color: 0x33ff55, depthTest: false }));
+    this.hpFg.scale.set(0.9, 0.12, 1);
+    this.hpFg.position.y = 2.15;
+    this.group.add(this.hpFg);
+
+    scene.add(this.group);
+  }
+
+  takeDamage(dmg, hitPoint, color = 0x9fe8ff) {
+    if (!this.alive) return;
+    this.health -= dmg;
+    this.lastDamageTime = performance.now();
+    spawnHitSpark(hitPoint, color);
+    const frac = Math.max(0, this.health / this.maxHealth);
+    this.hpFg.scale.x = Math.max(0.001, frac * 0.9);
+    this.hpFg.material.color.setHex(frac > 0.5 ? 0x33ff55 : frac > 0.25 ? 0xffcc33 : 0xff3333);
+
+    if (this.health <= 0) {
+      this.alive = false;
+      this.dying = true;
+      state.botsAlive--;
+      state.score += 100 + this.wave * 25;
+      updateScoreText();
+      playDeathSound();
+      checkWaveClear();
+    }
+  }
+
+  update(dt, now) {
+    if (this.removed) return;
+    if (this.dying) {
+      this.deathTimer += dt;
+      this.group.position.y -= dt * 1.8;
+      this.group.rotation.x += dt * 3;
+      if (this.deathTimer > 0.7) {
+        this.removed = true;
+        scene.remove(this.group);
+      }
+      return;
+    }
+
+    const toPlayer = new THREE.Vector3(player.position.x - this.group.position.x, 0, player.position.z - this.group.position.z);
+    const dist = toPlayer.length();
+    if (dist > 0.001) toPlayer.normalize();
+
+    this.group.rotation.y = Math.atan2(-toPlayer.x, -toPlayer.z);
+
+    const strafeAngle = Math.sin((now / 1000) * 1.6 + this.strafeSeed) * 0.7;
+    const moveDir = toPlayer.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), strafeAngle);
+
+    const rooted = now < this.rootedUntil;
+    if (!rooted) {
+      if (dist > this.desiredDist + 1) {
+        this.group.position.addScaledVector(moveDir, this.speed * dt);
+      } else if (dist < this.desiredDist - 1) {
+        this.group.position.addScaledVector(moveDir, -this.speed * 0.7 * dt);
+      }
+
+      this.group.position.x = Math.max(-27, Math.min(27, this.group.position.x));
+      this.group.position.z = Math.max(-27, Math.min(27, this.group.position.z));
+    }
+
+    if (dist < this.shootRange && now - this.lastShot > this.shotInterval && state.active && !state.dead) {
+      this.lastShot = now;
+      this.shoot();
+    }
+  }
+
+  shoot() {
+    const start = this.group.position.clone().add(new THREE.Vector3(0, 1.2, 0));
+    const target = player.position.clone().add(new THREE.Vector3(0, 1.0, 0));
+    const spread = (Math.random() - 0.5) * 0.14;
+    const dir = target.clone().sub(start).normalize().applyAxisAngle(new THREE.Vector3(0, 1, 0), spread);
+    const end = start.clone().add(dir.clone().multiplyScalar(26));
+    spawnTracer(start, end, 0xff5555);
+    playShootSoundBot();
+
+    const ray = new THREE.Raycaster(start, dir, 0, 26);
+    const hits = ray.intersectObjects([character.bodyMesh, ...obstacleMeshes]);
+    if (hits.length > 0 && hits[0].object === character.bodyMesh) {
+      damagePlayer(12 + Math.random() * 8, 'Enemy Bot');
+    }
+  }
+}
+
+const bots = [];
+
+function spawnWave() {
+  state.wave++;
+  updateWaveText();
+  const count = 2 + state.wave;
+  state.botsAlive = count;
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 20 + Math.random() * 8;
+    const x = Math.cos(angle) * dist, z = Math.sin(angle) * dist;
+    bots.push(new Bot({ x, z }, state.wave));
+  }
+  showWaveClearText('WAVE ' + state.wave, 1400);
+}
+
+function checkWaveClear() {
+  if (state.botsAlive <= 0 && state.active && !state.over) {
+    showWaveClearText('WAVE CLEARED', 1600);
+    setTimeout(() => {
+      if (state.active && !state.over) spawnWave();
+    }, 1800);
+  }
+}
+
+// ---------- Camera ----------
+function updateCamera() {
+  const dist = 6.5;
+  const height = 3.1 + player.pitch * 3.2;
+  camera.position.set(
+    player.position.x + Math.sin(player.yaw) * dist,
+    player.position.y + height,
+    player.position.z + Math.cos(player.yaw) * dist
+  );
+  camera.lookAt(player.position.x, player.position.y + 1.3, player.position.z);
+}
+
+// ---------- HUD Helpers ----------
+function updateWaveText() {
+  const el = document.getElementById('waveText');
+  if (state.mode === 'online') {
+    el.textContent = 'ONLINE ARENA';
+  } else {
+    el.textContent = 'WAVE ' + state.wave;
+  }
+}
+
+function updateOnlineStatus() {
+  const el = document.getElementById('onlineStatus');
+  if (state.mode !== 'online') {
+    el.style.display = 'none';
+    return;
+  }
+  el.style.display = 'flex';
+  const n = remotePlayers.size;
+  const countText = n === 0 ? 'WAITING FOR OPPONENTS' : n === 1 ? '1 OPPONENT IN ARENA' : `${n} OPPONENTS IN ARENA`;
+  const modeText = net.transport === 'ws' ? (net.ping > 0 ? `LOCAL SERVER (${net.ping}ms)` : 'LOCAL SERVER') : net.transport === 'bc' ? 'MULTI-TAB' : 'ONLINE';
+  const dotColor = net.connected ? '#4dff88' : '#ffaa33';
+  el.innerHTML = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${dotColor};box-shadow:0 0 6px ${dotColor};margin-right:8px;"></span>${modeText} &nbsp;|&nbsp; ${countText}`;
+}
+
+function updateScoreText() {
+  if (state.mode === 'online') {
+    document.getElementById('scoreText').textContent = 'SCORE ' + state.score + '  ·  KILLS ' + state.kills + '  ·  DEATHS ' + state.deaths;
+  } else {
+    document.getElementById('scoreText').textContent = 'SCORE ' + state.score;
+  }
+}
+
+function updateHealthBar() {
+  const pct = Math.max(0, (state.health / state.maxHealth) * 100);
+  const bar = document.getElementById('healthBarFg');
+  bar.style.width = pct + '%';
+  if (pct > 50) bar.style.background = 'linear-gradient(90deg,#1ab8ff,#7fe5ff)';
+  else if (pct > 25) bar.style.background = 'linear-gradient(90deg,#ffb700,#ffe066)';
+  else bar.style.background = 'linear-gradient(90deg,#ff3b30,#ff7970)';
+}
+
+function showKillFeedMessage(text) {
+  const feed = document.getElementById('killFeed');
+  const div = document.createElement('div');
+  div.className = 'killMsg';
+  div.textContent = text;
+  feed.appendChild(div);
+  while (feed.children.length > 4) feed.removeChild(feed.firstChild);
+  setTimeout(() => {
+    div.style.opacity = '0';
+    setTimeout(() => {
+      if (div.parentNode) div.parentNode.removeChild(div);
+    }, 650);
+  }, 3200);
+}
+
+function flashDamage() {
+  const el = document.getElementById('damageFlash');
+  el.style.transition = 'opacity 0.05s';
+  el.style.opacity = 1;
+  setTimeout(() => {
+    el.style.transition = 'opacity 0.4s';
+    el.style.opacity = 0;
+  }, 80);
+}
+
+function flashHitMarker() {
+  const el = document.getElementById('hitmarker');
+  el.style.transition = 'none';
+  el.style.opacity = 1;
+  setTimeout(() => {
+    el.style.transition = 'opacity 0.25s';
+    el.style.opacity = 0;
+  }, 70);
+}
+
+function showWaveClearText(text, duration) {
+  const el = document.getElementById('waveClear');
+  el.textContent = text;
+  el.style.transition = 'none';
+  el.style.opacity = 1;
+  setTimeout(() => {
+    el.style.transition = 'opacity 0.6s';
+    el.style.opacity = 0;
+  }, duration);
+}
+
+function pctHeight(remaining, total) {
+  return Math.max(0, Math.min(1, remaining / total)) * 100 + '%';
+}
+
+function updateAbilityHUD() {
+  const now = performance.now();
+  const a = state.abilities;
+
+  document.querySelector('#ab-punch-1 .abFill').style.height = a.punchCharges >= 1 ? '0%' : pctHeight(a.punchChargeTimer, PUNCH_RECHARGE);
+  document.querySelector('#ab-punch-2 .abFill').style.height = a.punchCharges >= 2 ? '0%' : a.punchCharges >= 1 ? pctHeight(a.punchChargeTimer, PUNCH_RECHARGE) : '100%';
+
+  // Slide HUD: shows active countdown when sliding, or cooldown
+  const slideEl = document.getElementById('ab-slide');
+  const slideFill = document.querySelector('#ab-slide-icon .abFill');
+  slideEl.classList.toggle('active', a.sliding);
+
+  if (a.sliding) {
+    const remainingSlide = Math.max(0, a.slideEndTime - now);
+    slideFill.style.height = pctHeight(SLIDE_DURATION - remainingSlide, SLIDE_DURATION);
+  } else {
+    slideFill.style.height = pctHeight(a.slideCooldownUntil - now, SLIDE_COOLDOWN);
+  }
+
+  document.querySelector('#ab-icicle-icon .abFill').style.height = pctHeight(a.icicleCooldownUntil - now, ICICLE_COOLDOWN);
+  document.querySelector('#ab-tailwhack-icon .abFill').style.height = pctHeight(a.tailwhackCooldownUntil - now, TAILWHACK_COOLDOWN);
+
+  // Dr. Andrew HUD
+  const an = state.andrew;
+  const beamFill = document.querySelector('#ab-beam-icon .abFill');
+  if (beamFill) {
+    beamFill.style.height = (100 - (an.beamCharge / BEAM_MAX_CHARGE) * 100) + '%';
+    document.getElementById('ab-beam').classList.toggle('active', an.beaming);
+  }
+  const fistFill = document.querySelector('#ab-fistpunch-icon .abFill');
+  if (fistFill) fistFill.style.height = pctHeight(an.fistCooldownUntil - now, FISTPUNCH_COOLDOWN);
+
+  const zapFill = document.querySelector('#ab-zap-icon .abFill');
+  if (zapFill) zapFill.style.height = pctHeight(an.zapCooldownUntil - now, ZAP_COOLDOWN);
+
+  const auraFill = document.querySelector('#ab-fireaura-icon .abFill');
+  if (auraFill) {
+    document.getElementById('ab-fireaura').classList.toggle('active', an.fireAuraActive);
+    auraFill.style.height = an.fireAuraActive ? '0%' : pctHeight(an.fireAuraCooldownUntil - now, FIREAURA_COOLDOWN);
+  }
+
+  const waveFill = document.querySelector('#ab-wave-icon .abFill');
+  if (waveFill) waveFill.style.height = pctHeight(an.waveCooldownUntil - now, WAVE_COOLDOWN);
+}
+
+// ---------- Input Listeners ----------
+const keys = {};
+window.addEventListener('keydown', (e) => {
+  keys[e.code] = true;
+  if (state.active && !state.paused && !state.over && !state.dead) {
+    if (state.character === 'andrew') {
+      if (e.code === 'KeyQ') useAndrewWave();
+      if (e.code === 'KeyE') useAndrewZap();
+      if (e.code === 'KeyR') useAndrewFireAura();
+    } else {
+      if (e.code === 'KeyQ') useIcicle(bots, remotePlayers);
+      if (e.code === 'KeyE') toggleSlide();
+      if (e.code === 'KeyR') useTailWhack();
+    }
+  }
+  if (e.code === 'Escape' && state.active && !state.over) {
+    if (state.paused) {
+      hidePause();
+      renderer.domElement.requestPointerLock();
+    } else {
+      showPause();
+    }
+  }
+});
+
+window.addEventListener('keyup', (e) => {
+  keys[e.code] = false;
+});
+
+const MOUSE_SENSITIVITY = 0.0026, PITCH_SENSITIVITY = 0.0018;
+document.addEventListener('mousemove', (e) => {
+  if (!state.active || state.paused || state.over) return;
+  player.yaw -= e.movementX * MOUSE_SENSITIVITY;
+  player.pitch -= e.movementY * PITCH_SENSITIVITY;
+  player.pitch = Math.max(-0.4, Math.min(0.55, player.pitch));
+});
+
+renderer.domElement.addEventListener('mousedown', (e) => {
+  if (!state.active || state.over || state.paused || state.dead) return;
+  if (document.pointerLockElement !== renderer.domElement) renderer.domElement.requestPointerLock();
+
+  if (state.character === 'andrew') {
+    // LMB: Lightning Beam
+    if (e.button === 0) {
+      startAndrewBeam();
+    }
+    // RMB: Fiery Punch
+    else if (e.button === 2) {
+      useAndrewFistPunch();
+    }
+  } else {
+    // LMB: Charge Snowball
+    if (e.button === 0) {
+      snowballManager.startCharge(performance.now());
+    }
+    // RMB: Punch
+    else if (e.button === 2) {
+      usePunch();
+    }
+  }
+});
+
+window.addEventListener('mouseup', (e) => {
+  if (e.button === 0) {
+    if (state.character === 'andrew') {
+      stopAndrewBeam();
+    } else {
+      snowballManager.releaseThrow(performance.now(), player);
+    }
+  }
+});
+
+renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// ---------- Game Flow ----------
+function beginGame(mode) {
+  const nameVal = document.getElementById('nameInput').value.trim();
+  localName = (nameVal || (state.character === 'andrew' ? 'Dr. Andrew' : 'Hyperswag')).slice(0, 16);
+  initAudio();
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('hud').style.display = 'block';
+  renderer.domElement.requestPointerLock();
+
+  startGame(mode);
+}
+
+function startGame(mode) {
+  state.mode = mode;
+  state.active = true;
+  state.over = false;
+  state.paused = false;
+  state.dead = false;
+  state.health = state.maxHealth;
+  state.score = 0;
+  state.wave = 0;
+  state.kills = 0;
+  state.deaths = 0;
+  state.lastDamageTime = -99999;
+  state.rootedUntil = 0;
+  state.abilities.punchCharges = PUNCH_MAX;
+  state.abilities.punchChargeTimer = 0;
+  state.abilities.sliding = false;
+  state.abilities.slideEndTime = 0;
+  state.abilities.slideCooldownUntil = 0;
+  state.abilities.icicleCooldownUntil = 0;
+  state.abilities.tailwhackCooldownUntil = 0;
+
+  state.andrew.beamCharge = BEAM_MAX_CHARGE;
+  state.andrew.beaming = false;
+  state.andrew.lastBeamStopTime = -99999;
+  state.andrew.lastBeamTick = -99999;
+  state.andrew.zapCooldownUntil = 0;
+  state.andrew.fireAuraActive = false;
+  state.andrew.fireAuraStartedAt = 0;
+  state.andrew.fireAuraCooldownUntil = 0;
+  state.andrew.fireAuraDamageDealt.clear();
+  state.andrew.waveCooldownUntil = 0;
+  state.andrew.fistCooldownUntil = 0;
+
+  rebuildCharacterForSelection();
+  document.getElementById('abilityBar').style.display = state.character === 'andrew' ? 'none' : 'flex';
+  document.getElementById('abilityBarAndrew').style.display = state.character === 'andrew' ? 'flex' : 'none';
+
+  updateHealthBar();
+  updateScoreText();
+  updateAbilityHUD();
+  updateWaveText();
+  updateOnlineStatus();
+
+  if (mode === 'online') {
+    net.init();
+    const p = randomArenaPoint();
+    player.position.set(p.x, 0, p.z);
+    player.velocity.set(0, 0, 0);
+    lastSyncPush = -99999;
+    pushLocalState(performance.now());
+  } else {
+    const p = randomArenaPoint();
+    player.position.set(p.x, 0, p.z);
+    spawnWave();
+  }
+}
+
+function endGame() {
+  state.over = true;
+  state.active = false;
+  snowballManager.charging = false;
+  state.andrew.beaming = false;
+  hideLightningBeamVisual();
+  if (document.pointerLockElement === renderer.domElement) document.exitPointerLock();
+  document.getElementById('gameOverScreen').style.display = 'flex';
+  document.getElementById('statsLine').textContent = `Score: ${state.score}  •  Reached Wave ${state.wave}`;
+}
+
+function showPause() {
+  if (state.active && !state.over) {
+    state.paused = true;
+    snowballManager.charging = false;
+    state.andrew.beaming = false;
+    hideLightningBeamVisual();
+    document.getElementById('pauseScreen').style.display = 'flex';
+  }
+}
+
+function hidePause() {
+  state.paused = false;
+  document.getElementById('pauseScreen').style.display = 'none';
+}
+
+document.getElementById('startWavesBtn').addEventListener('click', () => beginGame('waves'));
+document.getElementById('startOnlineBtn').addEventListener('click', () => beginGame('online'));
+document.getElementById('pauseScreen').addEventListener('click', () => {
+  hidePause();
+  renderer.domElement.requestPointerLock();
+});
+document.getElementById('restartBtn').addEventListener('click', () => {
+  location.reload();
+});
+
+function selectCharacter(charId) {
+  state.character = charId;
+  const isAndrew = charId === 'andrew';
+
+  document.getElementById('charHyperswagBtn').className = 'btn modeBtn' + (isAndrew ? ' secondary' : '');
+  document.getElementById('charAndrewBtn').className = 'btn modeBtn' + (isAndrew ? '' : ' secondary');
+
+  document.getElementById('charDesc').textContent = isAndrew
+    ? "You're Dr. Andrew. Channel lightning through a beam that chains between foes, zap enemies from the sky, burn them with a fire aura, and unleash a slow-building instant-kill wave."
+    : "You're Hyperswag. Unleash your frost powers, charge massive explosive snowballs, and dominate the arena.";
+
+  document.getElementById('controlsHyperswag').style.display = isAndrew ? 'none' : 'block';
+  document.getElementById('controlsHyperswag2').style.display = isAndrew ? 'none' : 'block';
+  document.getElementById('controlsAndrew').style.display = isAndrew ? 'block' : 'none';
+  document.getElementById('controlsAndrew2').style.display = isAndrew ? 'block' : 'none';
+
+  const nameInput = document.getElementById('nameInput');
+  if (!nameInput.value.trim() || nameInput.value === 'Hyperswag' || nameInput.value === 'Dr. Andrew') {
+    nameInput.value = isAndrew ? 'Dr. Andrew' : 'Hyperswag';
+  }
+}
+document.getElementById('charHyperswagBtn').addEventListener('click', () => selectCharacter('hyperswag'));
+document.getElementById('charAndrewBtn').addEventListener('click', () => selectCharacter('andrew'));
+
+// ---------- Main Render Loop ----------
+let lastTime = performance.now();
+
+function animate() {
+  requestAnimationFrame(animate);
+  const now = performance.now();
+  let dt = (now - lastTime) / 1000;
+  lastTime = now;
+  if (dt > 0.1) dt = 0.1;
+
+  if (state.active && !state.paused && !state.over) {
+    // 1. Update local player movement & slide
+    updatePlayer(dt, now, keys, obstacles);
+
+    // 2. Update snowball charging & active flying projectiles (Hyperswag only)
+    if (state.character !== 'andrew') {
+      if (!state.dead) {
+        snowballManager.updateCharging(now, player, dt);
+      }
+      snowballManager.updateProjectiles(now, dt, bots, remotePlayers, obstacles);
+    }
+
+    // 2b. Dr. Andrew ability updates
+    if (state.character === 'andrew') {
+      if (!state.dead) {
+        updateAndrewBeam(now, dt);
+        updateAndrewFireAura(now, dt);
+      }
+      updateLightningWaves(now, dt);
+    }
+
+    // 3. Recharge punch
+    if (state.abilities.punchCharges < PUNCH_MAX) {
+      state.abilities.punchChargeTimer -= dt * 1000;
+      if (state.abilities.punchChargeTimer <= 0) {
+        state.abilities.punchCharges++;
+        state.abilities.punchChargeTimer = state.abilities.punchCharges < PUNCH_MAX ? PUNCH_RECHARGE : 0;
+      }
+    }
+
+    // 4. Update Bots
+    for (const b of bots) {
+      if (!b.removed) b.update(dt, now);
+    }
+    for (let i = bots.length - 1; i >= 0; i--) {
+      if (bots[i].removed) bots.splice(i, 1);
+    }
+
+    // 5. Update Effects, Particles & Damage Numbers
+    updateTracers(now);
+    updateSparks(now);
+    updateSlideTrail(now);
+    updateSnowballParticles(now, dt);
+    updateDamageNumbers(now);
+    updateAbilityHUD();
+
+    // 6. Health regen when out of combat
+    if (!state.dead && state.health < state.maxHealth && now - state.lastDamageTime > HEALTH_REGEN_DELAY) {
+      state.health = Math.min(state.maxHealth, state.health + HEALTH_REGEN_RATE * dt);
+      updateHealthBar();
+    }
+
+    // 7. Online Multiplayer updates
+    if (state.mode === 'online') {
+      updateRemotePlayersVisual(dt, now);
+      // High-frequency sync: ~30Hz (32ms) when active, or 120ms when stationary
+      const isMovingOrActive = player.velocity.lengthSq() > 0.005 || snowballManager.charging || state.abilities.sliding || state.andrew.beaming || state.andrew.fireAuraActive;
+      const sendInterval = isMovingOrActive ? 32 : 120;
+      if (now - lastSyncPush > sendInterval) {
+        lastSyncPush = now;
+        pushLocalState(now);
+      }
+    }
+  }
+
+  updateCamera();
+  renderer.render(scene, camera);
+}
+
+// ---------- Initialize Systems ----------
+initPlayer(scene);
+snowballManager.init(scene);
+net.init();
+animate();
+
+</script>
+</body>
+</html>

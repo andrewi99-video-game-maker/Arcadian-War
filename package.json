@@ -1,0 +1,16 @@
+{
+  "name": "hyperswag-arena-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Static host + WebSocket relay server for Hyperswag Arena",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
